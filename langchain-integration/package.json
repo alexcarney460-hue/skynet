@@ -1,0 +1,29 @@
+{
+  "name": "@skynet/langchain",
+  "version": "1.0.0",
+  "description": "Pressure-aware agent for LangChain with Skynet cognitive infrastructure",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "langchain",
+    "agent",
+    "cognitive",
+    "pressure",
+    "stability",
+    "skynet"
+  ],
+  "author": "Alfred (via Skynet)",
+  "license": "MIT",
+  "peerDependencies": {
+    "langchain": ">=0.0.200"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
