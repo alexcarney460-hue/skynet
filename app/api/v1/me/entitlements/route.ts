@@ -46,10 +46,10 @@ export async function GET(request: Request) {
       );
     }
 
-    // Get entitlements
+    // Get entitlements (use service role to bypass RLS)
     const publicSupabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
     const entitlements = await getUserEntitlements(user.id, publicSupabase);
