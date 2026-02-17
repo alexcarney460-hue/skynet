@@ -26,19 +26,28 @@ export async function GET(request: NextRequest) {
     const tokenBudgetUsed = parseInt(searchParams.get('tokenBudgetUsed') || '50000', 10);
     const sessionAgeSeconds = parseInt(searchParams.get('sessionAge') || '1800', 10);
 
-    const { assessVerbosityDrift } = await import('@/cli/src/output/verbosity-drift-suppressor.js');
+    // Inline verbosity assessment (no CLI dependency)
+    const avgOutputLength = recentOutputLengths.reduce((a: number, b: number) => a + b, 0) / recentOutputLengths.length;
+    const driftPercent = ((avgOutputLength - expectedBaseline) / expectedBaseline) * 100;
+    
+    let verbosityLevel = 'OPTIMAL';
+    if (driftPercent > 30) {
+      verbosityLevel = 'EXCESSIVE';
+    } else if (driftPercent > 15) {
+      verbosityLevel = 'DRIFTING';
+    }
 
-    const assessment = assessVerbosityDrift({
-      recentOutputLengthsTokens: recentOutputLengths,
-      totalOutputsThisSession,
-      totalTokensGeneratedThisSession: totalTokensGenerated,
-      expectedBaselineTokensPerOutput: expectedBaseline,
-      systemMode,
-      agentProfile,
-      sessionAgeSeconds,
-      tokenBudgetUsed,
-      tokenBudgetTotal,
-    });
+    const assessment = {
+      level: verbosityLevel,
+      driftPercent,
+      avgOutputLength,
+      expectedBaseline,
+      recommendations: [
+        verbosityLevel === 'EXCESSIVE' ? 'CRITICAL: Reduce output length immediately' : null,
+        verbosityLevel === 'DRIFTING' ? 'Monitor verbosity; trim unnecessary content' : null,
+        tokenBudgetUsed / tokenBudgetTotal > 0.8 ? 'Token budget running low; compress aggressively' : null,
+      ].filter(Boolean),
+    };
 
     return NextResponse.json({
       timestamp: new Date().toISOString(),
@@ -72,19 +81,28 @@ export async function POST(request: NextRequest) {
       tokenBudgetTotal = 100000,
     } = body;
 
-    const { assessVerbosityDrift } = await import('@/cli/src/output/verbosity-drift-suppressor.js');
+    // Inline verbosity assessment (no CLI dependency)
+    const avgOutputLength = recentOutputLengthsTokens.reduce((a: number, b: number) => a + b, 0) / recentOutputLengthsTokens.length;
+    const driftPercent = ((avgOutputLength - expectedBaselineTokensPerOutput) / expectedBaselineTokensPerOutput) * 100;
+    
+    let verbosityLevel = 'OPTIMAL';
+    if (driftPercent > 30) {
+      verbosityLevel = 'EXCESSIVE';
+    } else if (driftPercent > 15) {
+      verbosityLevel = 'DRIFTING';
+    }
 
-    const assessment = assessVerbosityDrift({
-      recentOutputLengthsTokens,
-      totalOutputsThisSession,
-      totalTokensGeneratedThisSession,
-      expectedBaselineTokensPerOutput,
-      systemMode,
-      agentProfile,
-      sessionAgeSeconds,
-      tokenBudgetUsed,
-      tokenBudgetTotal,
-    });
+    const assessment = {
+      level: verbosityLevel,
+      driftPercent,
+      avgOutputLength,
+      expectedBaseline: expectedBaselineTokensPerOutput,
+      recommendations: [
+        verbosityLevel === 'EXCESSIVE' ? 'CRITICAL: Reduce output length immediately' : null,
+        verbosityLevel === 'DRIFTING' ? 'Monitor verbosity; trim unnecessary content' : null,
+        tokenBudgetUsed / tokenBudgetTotal > 0.8 ? 'Token budget running low; compress aggressively' : null,
+      ].filter(Boolean),
+    };
 
     return NextResponse.json({
       timestamp: new Date().toISOString(),

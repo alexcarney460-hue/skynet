@@ -54,21 +54,28 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Import regulator
-    const { evaluateContextPressure, renderPressureLevel } = await import('@/cli/src/output/context-pressure-regulator.js');
+    // Inline pressure evaluation (no CLI dependency)
+    let pressureLevel = 'LOW';
+    if (memoryUsedPercent > 80 || contextDriftPercent > 40) {
+      pressureLevel = 'CRITICAL';
+    } else if (memoryUsedPercent > 65 || contextDriftPercent > 30) {
+      pressureLevel = 'HIGH';
+    } else if (memoryUsedPercent > 50 || contextDriftPercent > 20) {
+      pressureLevel = 'MODERATE';
+    }
 
-    const pressure = evaluateContextPressure({
+    const pressure = {
+      level: pressureLevel,
+      sessionAgeSeconds,
       memoryUsedPercent,
       tokenBurnRatePerMin,
       contextDriftPercent,
-      sessionAgeSeconds,
-      tokenBudgetTotal,
-      tokenBudgetUsed,
-      contextWindowMaxBytes,
-      contextWindowUsedBytes,
-      systemMode,
-      agentProfile,
-    });
+      recommendations: [
+        pressureLevel === 'CRITICAL' ? 'CRITICAL: Consider checkpointing immediately' : null,
+        pressureLevel === 'HIGH' ? 'Monitor drift closely; prepare for compression' : null,
+        tokenBurnRatePerMin > 50 ? 'High token burn detected; reduce output verbosity' : null,
+      ].filter(Boolean),
+    };
 
     return NextResponse.json({
       timestamp: new Date().toISOString(),
@@ -108,20 +115,28 @@ export async function POST(request: NextRequest) {
       agentProfile = 'balanced',
     } = body;
 
-    const { evaluateContextPressure } = await import('@/cli/src/output/context-pressure-regulator.js');
+    // Inline pressure evaluation (no CLI dependency)
+    let pressureLevel = 'LOW';
+    if (memoryUsedPercent > 80 || contextDriftPercent > 40) {
+      pressureLevel = 'CRITICAL';
+    } else if (memoryUsedPercent > 65 || contextDriftPercent > 30) {
+      pressureLevel = 'HIGH';
+    } else if (memoryUsedPercent > 50 || contextDriftPercent > 20) {
+      pressureLevel = 'MODERATE';
+    }
 
-    const pressure = evaluateContextPressure({
+    const pressure = {
+      level: pressureLevel,
+      sessionAgeSeconds,
       memoryUsedPercent,
       tokenBurnRatePerMin,
       contextDriftPercent,
-      sessionAgeSeconds,
-      tokenBudgetTotal,
-      tokenBudgetUsed,
-      contextWindowMaxBytes,
-      contextWindowUsedBytes,
-      systemMode,
-      agentProfile,
-    });
+      recommendations: [
+        pressureLevel === 'CRITICAL' ? 'CRITICAL: Consider checkpointing immediately' : null,
+        pressureLevel === 'HIGH' ? 'Monitor drift closely; prepare for compression' : null,
+        tokenBurnRatePerMin > 50 ? 'High token burn detected; reduce output verbosity' : null,
+      ].filter(Boolean),
+    };
 
     return NextResponse.json({
       timestamp: new Date().toISOString(),

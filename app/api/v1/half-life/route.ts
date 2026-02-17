@@ -26,21 +26,31 @@ export async function GET(request: NextRequest) {
     const driftHistory = [20, 21, 23, 25, 26].map((x) => x - 1 + Math.floor(sessionAgeMinutes / 30) * 1);
     const burnHistory = [30, 32, 34, 35, 36];
 
-    const { estimateSessionHalfLife } = await import('@/cli/src/output/session-half-life-estimator.js');
+    // Inline half-life estimation (no CLI dependency)
+    const tokenBurnRate = (tokenTotal - tokenRemaining) / sessionAgeMinutes;
+    const minutesUntilTokenExhaustion = tokenRemaining / Math.max(tokenBurnRate, 1);
+    const decayRate = (memoryPressure + contextDrift) / 100;
+    const estimatedHalfLifeMinutes = minutesUntilTokenExhaustion / (1 + decayRate);
 
-    const halfLife = estimateSessionHalfLife({
+    let stability = 'STABLE';
+    if (estimatedHalfLifeMinutes < 10) {
+      stability = 'FRAGILE';
+    } else if (estimatedHalfLifeMinutes < 30) {
+      stability = 'DECAYING';
+    }
+
+    const halfLife = {
+      estimatedHalfLifeMinutes: Math.round(estimatedHalfLifeMinutes),
+      stability,
       sessionAgeMinutes,
-      currentMemoryPressurePercent: memoryPressure,
-      currentContextDriftPercent: contextDrift,
-      tokenBudgetRemaining: tokenRemaining,
-      tokenBudgetTotal: tokenTotal,
-      memoryPressureHistory: memHistory,
-      contextDriftHistory: driftHistory,
-      tokenBurnRateHistory: burnHistory,
-      errorCountThisSession: errorCount,
-      expectedSessionLengthMinutes: expectedLength,
-      systemMode,
-    });
+      tokenBurnRatePerMin: Math.round(tokenBurnRate * 10) / 10,
+      minutesUntilExhaustion: Math.round(minutesUntilTokenExhaustion),
+      recommendations: [
+        stability === 'FRAGILE' ? 'URGENT: Session ending soon; checkpoint immediately' : null,
+        stability === 'DECAYING' ? 'Stability declining; prepare for graceful shutdown' : null,
+        errorCount > 3 ? 'Multiple errors detected; consider restart' : null,
+      ].filter(Boolean),
+    };
 
     return NextResponse.json({
       timestamp: new Date().toISOString(),
@@ -76,21 +86,31 @@ export async function POST(request: NextRequest) {
       systemMode = 'production',
     } = body;
 
-    const { estimateSessionHalfLife } = await import('@/cli/src/output/session-half-life-estimator.js');
+    // Inline half-life estimation (no CLI dependency)
+    const tokenBurnRate = (tokenBudgetTotal - tokenBudgetRemaining) / sessionAgeMinutes;
+    const minutesUntilTokenExhaustion = tokenBudgetRemaining / Math.max(tokenBurnRate, 1);
+    const decayRate = (currentMemoryPressurePercent + currentContextDriftPercent) / 100;
+    const estimatedHalfLifeMinutes = minutesUntilTokenExhaustion / (1 + decayRate);
 
-    const halfLife = estimateSessionHalfLife({
+    let stability = 'STABLE';
+    if (estimatedHalfLifeMinutes < 10) {
+      stability = 'FRAGILE';
+    } else if (estimatedHalfLifeMinutes < 30) {
+      stability = 'DECAYING';
+    }
+
+    const halfLife = {
+      estimatedHalfLifeMinutes: Math.round(estimatedHalfLifeMinutes),
+      stability,
       sessionAgeMinutes,
-      currentMemoryPressurePercent,
-      currentContextDriftPercent,
-      tokenBudgetRemaining,
-      tokenBudgetTotal,
-      memoryPressureHistory,
-      contextDriftHistory,
-      tokenBurnRateHistory,
-      errorCountThisSession,
-      expectedSessionLengthMinutes,
-      systemMode,
-    });
+      tokenBurnRatePerMin: Math.round(tokenBurnRate * 10) / 10,
+      minutesUntilExhaustion: Math.round(minutesUntilTokenExhaustion),
+      recommendations: [
+        stability === 'FRAGILE' ? 'URGENT: Session ending soon; checkpoint immediately' : null,
+        stability === 'DECAYING' ? 'Stability declining; prepare for graceful shutdown' : null,
+        errorCountThisSession > 3 ? 'Multiple errors detected; consider restart' : null,
+      ].filter(Boolean),
+    };
 
     return NextResponse.json({
       timestamp: new Date().toISOString(),
