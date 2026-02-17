@@ -10,10 +10,19 @@ import { entitlementsCommand } from '../commands/entitlements.js';
 import { authLoginCommand, authLogoutCommand } from '../commands/auth.js';
 import { unlockCommand } from '../commands/unlock.js';
 import { renderError } from '../output/renderer.js';
+import { showSplash } from '../output/splash.js';
 
 const VERSION = '1.0.0';
 
+// Show splash screen on first run (only if no arguments or just --help/--version)
+const shouldShowSplash = process.argv.length <= 2 || 
+  (process.argv.length === 3 && (process.argv[2] === '--help' || process.argv[2] === '--version'));
+
 async function main() {
+  if (shouldShowSplash && process.argv.length <= 2) {
+    showSplash();
+  }
+
   program
     .name('skynet')
     .description('Skynet - Registry of Performance-Optimized Agent Systems')
