@@ -13,6 +13,7 @@ import { demoCommand } from '../commands/demo.js';
 import { analyzeCommand } from '../commands/analyze.js';
 import { optimizeCommand } from '../commands/optimize.js';
 import { analyzeSessionCommand } from '../commands/analyze-session.js';
+import { compressSessionCommand } from '../commands/compress-session.js';
 import { renderError } from '../output/renderer.js';
 import { showSplash } from '../output/splash.js';
 
@@ -193,6 +194,20 @@ async function main() {
     .action(async () => {
       try {
         const output = await optimizeCommand();
+        console.log(output);
+      } catch (err) {
+        console.error(renderError(err instanceof Error ? err.message : String(err)));
+        process.exit(1);
+      }
+    });
+
+  // compress command
+  program
+    .command('compress')
+    .description('Session context compression & deduplication')
+    .action(async () => {
+      try {
+        const output = await compressSessionCommand();
         console.log(output);
       } catch (err) {
         console.error(renderError(err instanceof Error ? err.message : String(err)));
