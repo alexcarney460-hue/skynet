@@ -21,9 +21,18 @@ export async function GET(request: Request) {
     }
 
     const token = authHeader.slice(7);
+    
+    // Verify env vars
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL');
+    }
+    if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY');
+    }
+
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       { global: { headers: { Authorization: `Bearer ${token}` } } }
     );
 
@@ -54,9 +63,10 @@ export async function GET(request: Request) {
       },
     });
   } catch (err) {
-    console.error('GET /v1/me/entitlements error:', err);
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error('GET /v1/me/entitlements error:', errorMsg);
     return NextResponse.json(
-      { status: 'error', message: 'Failed to fetch entitlements' },
+      { status: 'error', message: `Failed to fetch entitlements: ${errorMsg}` },
       { status: 500 }
     );
   }

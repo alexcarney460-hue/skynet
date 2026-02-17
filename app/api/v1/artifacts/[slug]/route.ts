@@ -14,9 +14,18 @@ export async function GET(
 ) {
   try {
     const { slug } = await params;
+    
+    // Verify env vars
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL');
+    }
+    if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY');
+    }
+
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
 
     // Fetch artifact (preview fields always available)
@@ -87,9 +96,10 @@ export async function GET(
       });
     }
   } catch (err) {
-    console.error('GET /v1/artifacts/[slug] error:', err);
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error('GET /v1/artifacts/[slug] error:', errorMsg);
     return NextResponse.json(
-      { status: 'error', message: 'Failed to fetch artifact' },
+      { status: 'error', message: `Failed to fetch artifact: ${errorMsg}` },
       { status: 500 }
     );
   }
