@@ -44,9 +44,15 @@ export async function GET() {
     });
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
+    const errorDetail = err instanceof Error ? err.toString() : String(err);
     console.error('GET /v1/artifacts error:', errorMsg);
+    console.error('Full error:', errorDetail);
     return NextResponse.json(
-      { status: 'error', message: `Failed to fetch artifacts: ${errorMsg}` },
+      { 
+        status: 'error', 
+        message: `Failed to fetch artifacts: ${errorMsg}`,
+        debug: errorDetail
+      },
       { status: 500 }
     );
   }
