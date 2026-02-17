@@ -1,6 +1,12 @@
 # SKYNET — Handoff to OpenClaw Integration
 
-**Status**: Deployment complete. Ready for Phase 2 (OpenClaw integration).
+**Status**: ✅ Deployment complete. APIs live & tested. Middleware design complete. **Ready for Phase 2 (OpenClaw integration).**
+
+**Key Deliverables for Integration**:
+- `OPENCLAW_MIDDLEWARE.md` — Production-safe integration spec (3 hooks, fail-safe design)
+- `AGENT_CONSUMPTION_PATTERNS.md` — How agents use Skynet signals
+- `COMPLETE_STRATEGY.md` — Full vision + execution plan
+- Live APIs at `https://skynet-gray.vercel.app/api/v1/*` (tested & working)
 
 ---
 
@@ -8,11 +14,12 @@
 
 ### Product (100% Complete)
 ✅ 4 cognitive capabilities (Pressure, Verbosity, Half-Life, Drift)  
-✅ 5 production APIs (live on skynetx.io)  
-✅ 5 CLI commands (ready to publish)  
+✅ 5 production APIs (live on skynet-gray.vercel.app/api/v1/*)  
+✅ 5 CLI commands (ready to publish via npm)  
 ✅ Full test coverage + performance validation  
 ✅ Zero external dependencies  
 ✅ <2ms deterministic evaluations  
+✅ APIs verified working (tested 2026-02-17)  
 
 ### Documentation (100% Complete)
 ✅ 12 strategic documents  
@@ -23,11 +30,15 @@
 ✅ Viral growth mechanics documented  
 
 ### Deployment (100% Complete)
-✅ GitHub pushed (all commits)  
-✅ APIs live on Vercel (skynetx.io/api/v1/*)  
-✅ Custom domain configured  
-✅ Uptime monitoring in place  
-✅ Rate limiting configured  
+✅ GitHub pushed (all commits, latest: 3b22dda)  
+✅ APIs live on Vercel (https://skynet-gray.vercel.app/api/v1/*)  
+✅ All 5 endpoints operational and tested  
+✅ Custom domain (skynetx.io) pointing to deployment  
+✅ Auto-deploy configured (git push → Vercel)  
+
+**Known Issues (Non-blocking)**:
+- Custom domain redirect (skynetx.io → skynet-gray) needs DNS update (low priority)
+- CLI package (@skynet/cli) not published to npm (local CLI works fine)  
 
 ### Strategy (100% Complete)
 ✅ Repositioned as cognitive infrastructure  
@@ -61,43 +72,26 @@
 
 ### Near-Term (Month 1)
 
-**Build Middleware**
-```typescript
-// File: openclaw-middleware.ts
-export function createSkynetMiddleware(config: MiddlewareConfig) {
-  return async (agent: OpenClawAgent) => {
-    // Pre-tool-execution checks
-    agent.hooks.beforeTool.push(async (tool) => {
-      const pressure = await skynet.evaluatePressure();
-      if (pressure.level === 'CRITICAL') {
-        throw new Error('Session critical, aborting');
-      }
-    });
+**Middleware Spec Complete** ✅
+- See `OPENCLAW_MIDDLEWARE.md` for production-safe design
+- Three hooks: pre-response, pre-memory, pre-heartbeat
+- 50ms timeouts with silent bypass on any failure
+- Zero impact to agent runtime if Skynet unavailable
 
-    // Periodic health checks
-    agent.hooks.periodic.push(async () => {
-      const drift = await skynet.detectDrift();
-      const verbosity = await skynet.assessVerbosity();
-      const halfLife = await skynet.estimateHalfLife();
-      
-      // Apply decisions automatically
-      if (verbosity.shouldEnforceLimits) {
-        agent.maxOutputTokens = verbosity.recommendations.truncateOutputAt;
-      }
-      if (halfLife.shouldCheckpoint) {
-        await agent.saveCheckpoint();
-      }
-    });
-  };
-}
-```
+**Implement Middleware**
+- [ ] Copy middleware code from `OPENCLAW_MIDDLEWARE.md`
+- [ ] Insert hooks into OpenClaw agent loop
+- [ ] Wire up metrics collection
+- [ ] Configure Skynet API endpoint
+- [ ] Test failure scenarios (Skynet down, timeouts, network errors)
 
 **Integration Testing**
-- [ ] Test with 3-5 real agents
-- [ ] Measure token savings
-- [ ] Measure failure prevention
+- [ ] Test with 3-5 real OpenClaw agents
+- [ ] Measure token savings (target: 30-50%)
+- [ ] Measure failure prevention (target: 80%+)
 - [ ] Measure stability gains
-- [ ] Validate latency impact
+- [ ] Validate latency impact (<50ms per gate)
+- [ ] Validate silent bypass when Skynet fails
 
 **Beta Results Documentation**
 - [ ] Before/after comparison
