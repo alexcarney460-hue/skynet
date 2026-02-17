@@ -17,9 +17,9 @@ export async function GET() {
         { status: 500 }
       );
     }
-    if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json(
-        { status: 'error', message: 'Missing NEXT_PUBLIC_SUPABASE_ANON_KEY env var' },
+        { status: 'error', message: 'Missing SUPABASE_SERVICE_ROLE_KEY env var' },
         { status: 500 }
       );
     }
@@ -29,12 +29,16 @@ export async function GET() {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
+    console.log('Fetching artifacts from:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+
     const { data, error } = await supabase
       .from('artifacts')
       .select(
         'id, slug, category, title, description, preview_excerpt, price_cents, version, created_at'
       )
       .order('created_at', { ascending: false });
+
+    console.log('Query result - error:', error, 'data count:', data?.length);
 
     if (error) throw error;
 
