@@ -42,6 +42,35 @@ User owns artifact IF:
 
 Centralized in `lib/entitlements.ts`.
 
+### CLI Installation
+
+**Option 1: NPM (Recommended)**
+```bash
+npm install -g @skynet/cli
+skynet status
+```
+
+**Option 2: Standalone Binary**
+Download from [GitHub Releases](https://github.com/alexcarney460-hue/skynet/releases):
+- `skynet.exe` (Windows)
+- `skynet-macos-x64` (macOS Intel)
+- `skynet-macos-arm64` (macOS Apple Silicon)
+- `skynet-linux` (Linux)
+
+Then run:
+```bash
+./skynet status
+```
+
+**Option 3: Local Development**
+```bash
+cd cli
+npm install
+npm run build
+npm link  # Makes `skynet` available globally
+skynet status
+```
+
 ### CLI Commands
 
 ```
@@ -50,9 +79,11 @@ skynet artifacts           List artifacts
 skynet artifact <slug>     View artifact
 skynet entitlements        Show unlocks
 skynet auth:login          Magic link auth
+skynet unlock [slug]       Unlock artifact
+skynet auth:logout         Clear authentication
 ```
 
-See `cli/README.md` for full command reference.
+See `cli/README.md` for full command reference and examples.
 
 ---
 

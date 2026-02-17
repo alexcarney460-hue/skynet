@@ -38,10 +38,12 @@ CREATE TABLE user_unlocks (
   artifact_id UUID,
   unlock_type TEXT NOT NULL CHECK (unlock_type IN ('artifact', 'full')),
   unlocked_at TIMESTAMP DEFAULT NOW(),
-  stripe_payment_intent_id TEXT UNIQUE,
-  UNIQUE(user_id, artifact_id) WHERE artifact_id IS NOT NULL,
-  UNIQUE(user_id) WHERE unlock_type = 'full'
+  stripe_payment_intent_id TEXT UNIQUE
 );
+
+-- Partial unique indexes for conditional uniqueness
+CREATE UNIQUE INDEX idx_user_unlocks_artifact ON user_unlocks(user_id, artifact_id) WHERE artifact_id IS NOT NULL;
+CREATE UNIQUE INDEX idx_user_unlocks_full ON user_unlocks(user_id) WHERE unlock_type = 'full';
 
 -- ============ INDEXES ============
 
