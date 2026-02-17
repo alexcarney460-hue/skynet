@@ -32,16 +32,17 @@ async function createClient() {
  */
 export async function GET(
   _request: Request,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const { slug } = await params;
     const supabase = await createClient();
 
     // Fetch artifact (preview fields always available)
     const { data: artifact, error: artifactError } = await supabase
       .from('artifacts')
       .select('*')
-      .eq('slug', params.slug)
+      .eq('slug', slug)
       .single();
 
     if (artifactError || !artifact) {
@@ -88,7 +89,7 @@ export async function GET(
       });
     }
   } catch (err) {
-    console.error(`GET /v1/artifacts/[${params.slug}] error:`, err);
+    console.error('GET /v1/artifacts/[slug] error:', err);
     return NextResponse.json(
       { status: 'error', message: 'Failed to fetch artifact' },
       { status: 500 }
