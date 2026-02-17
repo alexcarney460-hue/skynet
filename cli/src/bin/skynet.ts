@@ -9,28 +9,36 @@ import { artifactCommand } from '../commands/artifact.js';
 import { entitlementsCommand } from '../commands/entitlements.js';
 import { authLoginCommand, authLogoutCommand } from '../commands/auth.js';
 import { unlockCommand } from '../commands/unlock.js';
+import { demoCommand } from '../commands/demo.js';
 import { renderError } from '../output/renderer.js';
 import { showSplash } from '../output/splash.js';
 
 const VERSION = '1.0.0';
 
-// Show splash screen on first run (only if no arguments or just --help/--version)
-const shouldShowSplash = process.argv.length <= 2 || 
-  (process.argv.length === 3 && (process.argv[2] === '--help' || process.argv[2] === '--version'));
+// Run demo on startup if no arguments provided
+const shouldRunDemo = process.argv.length <= 2;
 
 async function main() {
-  if (shouldShowSplash && process.argv.length <= 2) {
-    showSplash();
+  // Initialize client first
+  const token = getToken();
+  const client = new SkynetClient(token?.access_token);
+
+  // Run demo on startup
+  if (shouldRunDemo) {
+    try {
+      const output = await demoCommand(client);
+      console.log(output);
+      process.exit(0);
+    } catch (err) {
+      console.error(renderError(err instanceof Error ? err.message : String(err)));
+      process.exit(1);
+    }
   }
 
   program
     .name('skynet')
     .description('Skynet - Registry of Performance-Optimized Agent Systems')
     .version(VERSION);
-
-  // Initialize client
-  const token = getToken();
-  const client = new SkynetClient(token?.access_token);
 
   // status command
   program
@@ -125,6 +133,20 @@ async function main() {
     .action(async (slug: string | undefined, options: { full?: boolean }) => {
       try {
         const output = await unlockCommand(slug, options.full || false);
+        console.log(output);
+      } catch (err) {
+        console.error(renderError(err instanceof Error ? err.message : String(err)));
+        process.exit(1);
+      }
+    });
+
+  // demo command
+  program
+    .command('demo')
+    .description('Run interactive demo (for videos/presentations)')
+    .action(async () => {
+      try {
+        const output = await demoCommand(client);
         console.log(output);
       } catch (err) {
         console.error(renderError(err instanceof Error ? err.message : String(err)));
