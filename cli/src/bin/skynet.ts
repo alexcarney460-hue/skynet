@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { Program, Option } from 'commander';
+import { Program } from 'commander';
 import { SkynetClient } from '../api/client.js';
 import { getToken } from '../auth/storage.js';
 import { statusCommand } from '../commands/status.js';
@@ -8,7 +8,8 @@ import { artifactsCommand } from '../commands/artifacts.js';
 import { artifactCommand } from '../commands/artifact.js';
 import { entitlementsCommand } from '../commands/entitlements.js';
 import { authLoginCommand, authLogoutCommand } from '../commands/auth.js';
-import { error } from '../output/format.js';
+import { unlockCommand } from '../commands/unlock.js';
+import { renderError } from '../output/renderer.js';
 
 const VERSION = '1.0.0';
 
@@ -104,7 +105,22 @@ async function main() {
         const output = await authLogoutCommand();
         console.log(output);
       } catch (err) {
-        console.error(error(err instanceof Error ? err.message : String(err)));
+        console.error(renderError(err instanceof Error ? err.message : String(err)));
+        process.exit(1);
+      }
+    });
+
+  // unlock command
+  program
+    .command('unlock [slug]')
+    .option('--full', 'Unlock full registry')
+    .description('Initiate artifact or registry unlock')
+    .action(async (slug: string | undefined, options: { full?: boolean }) => {
+      try {
+        const output = await unlockCommand(slug, options.full || false);
+        console.log(output);
+      } catch (err) {
+        console.error(renderError(err instanceof Error ? err.message : String(err)));
         process.exit(1);
       }
     });
@@ -113,6 +129,6 @@ async function main() {
 }
 
 main().catch(err => {
-  console.error(error(err instanceof Error ? err.message : String(err)));
+  console.error(renderError(err instanceof Error ? err.message : String(err)));
   process.exit(1);
 });

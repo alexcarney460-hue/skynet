@@ -1,21 +1,24 @@
 import { SkynetClient } from '../api/client.js';
-import { section, pair, DIVIDER } from '../output/format.js';
+import { renderPanel, renderList } from '../output/renderer.js';
 
 export async function entitlementsCommand(client: SkynetClient): Promise<string> {
   const entitlements = await client.getEntitlements();
 
-  let output = '';
-  output += section('ENTITLEMENTS') + '\n';
-  output += pair('User ID', entitlements.user_id.substring(0, 12) + '...') + '\n';
-  output += pair('Full Unlock', entitlements.full_unlock) + '\n';
-  output += pair('Individual Unlocks', entitlements.unlocked_artifacts.length) + '\n';
-  output += DIVIDER + '\n';
+  const rows = [
+    { key: 'User ID', value: entitlements.user_id.substring(0, 12) + '...' },
+    { key: 'Full Unlock', value: entitlements.full_unlock },
+    { key: 'Individual Unlocks', value: entitlements.unlocked_artifacts.length },
+  ];
+
+  let output = renderPanel('ENTITLEMENTS', rows);
 
   if (entitlements.unlocked_artifacts.length > 0) {
-    output += '\nINDIVIDUAL UNLOCKS\n';
-    entitlements.unlocked_artifacts.forEach(id => {
-      output += `  ✓ ${id.substring(0, 20)}...\n`;
-    });
+    output += '\nUNLOCKED ARTIFACTS\n─────────────────────────────────\n\n';
+    const items = entitlements.unlocked_artifacts.map(id => ({
+      text: `${id.substring(0, 20)}...`,
+      indent: 0,
+    }));
+    output += renderList(items);
   }
 
   return output;

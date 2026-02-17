@@ -1,29 +1,28 @@
-import { clearToken, saveToken } from '../auth/storage.js';
-import { section, success, error, DIVIDER } from '../output/format.js';
-import { AuthToken } from '../types.js';
+import { clearToken } from '../auth/storage.js';
+import { renderPanel, renderSuccess, renderInfo } from '../output/renderer.js';
 
 export async function authLoginCommand(): Promise<string> {
   // In a real implementation, this would:
   // 1. POST to /auth/login with email
   // 2. Wait for magic link confirmation
   // 3. Store token
-  
-  let output = '';
-  output += section('AUTHENTICATION') + '\n\n';
-  output += 'Magic link authentication not yet implemented.\n';
-  output += 'Coming in Skynet CLI v1.1\n';
-  output += DIVIDER;
 
-  return output;
+  const rows = [
+    { key: 'Status', value: 'NOT YET IMPLEMENTED' },
+    { key: 'Available In', value: 'Skynet CLI v1.1' },
+  ];
+
+  return renderPanel('AUTHENTICATION', rows);
 }
 
 export async function authLogoutCommand(): Promise<string> {
   clearToken();
 
-  let output = '';
-  output += section('AUTHENTICATION') + '\n';
-  output += success('Logged out successfully') + '\n';
-  output += DIVIDER;
+  const rows = [
+    { key: 'Status', value: 'LOGGED OUT' },
+    { key: 'Auth Token', value: 'CLEARED' },
+  ];
 
-  return output;
+  const output = renderPanel('AUTHENTICATION', rows);
+  return output + '\n' + renderSuccess('Session cleared');
 }

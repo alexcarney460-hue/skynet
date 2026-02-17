@@ -1,5 +1,5 @@
 import { SkynetClient } from '../api/client.js';
-import { section, DIVIDER, price } from '../output/format.js';
+import { renderSectionHeader, renderArtifactTable, renderInfo } from '../output/renderer.js';
 import { getToken } from '../auth/storage.js';
 import { Entitlements } from '../types.js';
 
@@ -17,25 +17,19 @@ export async function artifactsCommand(client: SkynetClient): Promise<string> {
   }
 
   let output = '';
-  output += section(`ARTIFACTS (${artifacts.length} total)`) + '\n\n';
+  output += renderSectionHeader(`ARTIFACTS (${artifacts.length} total)`);
 
-  artifacts.forEach(artifact => {
-    const isUnlocked =
-      entitlements?.full_unlock ||
-      entitlements?.unlocked_artifacts.includes(artifact.id);
-    
-    const status = isUnlocked ? 'UNLOCKED' : 'LOCKED';
-    const row = [
-      artifact.slug.padEnd(35),
-      price(artifact.price_cents).padStart(8),
-      status.padStart(10),
-    ].join('  ');
-    
-    output += row + '\n';
-  });
+  const tableData = artifacts.map(artifact => ({
+    slug: artifact.slug,
+    price_cents: artifact.price_cents,
+    status: (entitlements?.full_unlock ||
+      entitlements?.unlocked_artifacts.includes(artifact.id)
+        ? 'UNLOCKED'
+        : 'LOCKED') as 'LOCKED' | 'UNLOCKED',
+  }));
 
-  output += DIVIDER + '\n\n';
-  output += 'Run: skynet artifact <slug> for details\n';
+  output += renderArtifactTable(tableData) + '\n\n';
+  output += renderInfo('Run: skynet artifact <slug> for details');
 
   return output;
 }

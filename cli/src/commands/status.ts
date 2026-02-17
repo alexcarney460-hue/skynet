@@ -1,5 +1,5 @@
 import { SkynetClient } from '../api/client.js';
-import { section, pair, DIVIDER, info } from '../output/format.js';
+import { renderPanel } from '../output/renderer.js';
 import { getToken } from '../auth/storage.js';
 
 const VERSION = '1.0.0';
@@ -7,35 +7,32 @@ const API_VERSION = 'v1.0';
 
 export async function statusCommand(client: SkynetClient): Promise<string> {
   const token = getToken();
-
-  let output = '';
-  output += section('SYSTEM STATUS') + '\n';
+  const rows: Array<{ key: string; value: string | boolean | number }> = [];
 
   try {
     const artifacts = await client.listArtifacts();
-    output += pair('Registry State', 'INDEXED') + '\n';
-    output += pair('Artifacts Online', artifacts.length) + '\n';
+    rows.push({ key: 'Registry State', value: 'INDEXED' });
+    rows.push({ key: 'Artifacts Online', value: artifacts.length });
   } catch {
-    output += pair('Registry State', 'OFFLINE') + '\n';
+    rows.push({ key: 'Registry State', value: 'OFFLINE' });
   }
 
   if (token) {
     try {
       const entitlements = await client.getEntitlements();
-      output += pair('Auth State', 'AUTHENTICATED') + '\n';
-      output += pair('User ID', entitlements.user_id.substring(0, 8) + '...') + '\n';
-      output += pair('Full Unlock', entitlements.full_unlock) + '\n';
-      output += pair('Unlocked Artifacts', entitlements.unlocked_artifacts.length) + '\n';
+      rows.push({ key: 'Auth State', value: 'AUTHENTICATED' });
+      rows.push({ key: 'User ID', value: entitlements.user_id.substring(0, 8) + '...' });
+      rows.push({ key: 'Full Unlock', value: entitlements.full_unlock });
+      rows.push({ key: 'Unlocked Artifacts', value: entitlements.unlocked_artifacts.length });
     } catch {
-      output += pair('Auth State', 'STALE') + '\n';
+      rows.push({ key: 'Auth State', value: 'STALE' });
     }
   } else {
-    output += pair('Auth State', 'UNAUTHENTICATED') + '\n';
+    rows.push({ key: 'Auth State', value: 'UNAUTHENTICATED' });
   }
 
-  output += pair('API Version', API_VERSION) + '\n';
-  output += pair('CLI Version', VERSION) + '\n';
-  output += DIVIDER;
+  rows.push({ key: 'API Version', value: API_VERSION });
+  rows.push({ key: 'CLI Version', value: VERSION });
 
-  return output;
+  return renderPanel('SYSTEM STATUS', rows);
 }

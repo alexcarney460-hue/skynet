@@ -1,31 +1,29 @@
 import { SkynetClient } from '../api/client.js';
-import { section, pair, DIVIDER, price } from '../output/format.js';
+import { renderPanel, renderSectionHeader, renderInfo, formatPrice } from '../output/renderer.js';
 
 export async function artifactCommand(client: SkynetClient, slug: string, showContent: boolean = false): Promise<string> {
   const artifact = await client.getArtifact(slug);
 
-  let output = '';
-  output += section('ARTIFACT DETAIL') + '\n';
-  output += pair('Title', artifact.title) + '\n';
-  output += pair('Slug', artifact.slug) + '\n';
-  output += pair('Category', artifact.category.replace(/_/g, ' ')) + '\n';
-  output += pair('Version', artifact.version) + '\n';
-  output += pair('Price', price(artifact.price_cents)) + '\n';
-  output += pair('Status', artifact.entitled ? 'UNLOCKED' : 'LOCKED') + '\n';
-  output += DIVIDER + '\n\n';
+  const rows = [
+    { key: 'Title', value: artifact.title },
+    { key: 'Category', value: artifact.category.replace(/_/g, ' ') },
+    { key: 'Version', value: artifact.version },
+    { key: 'Price', value: formatPrice(artifact.price_cents) },
+    { key: 'Status', value: artifact.entitled ? 'UNLOCKED' : 'LOCKED' },
+  ];
 
-  output += 'DESCRIPTION\n';
-  output += artifact.description + '\n\n';
+  let output = renderPanel('ARTIFACT', rows);
+
+  output += '\nDESCRIPTION\n─────────────────────────────────\n\n';
+  output += artifact.description + '\n';
 
   if (artifact.entitled && artifact.content_text && showContent) {
-    output += DIVIDER + '\n\n';
-    output += 'CONTENT\n';
-    output += artifact.content_text + '\n\n';
-    output += DIVIDER;
+    output += '\n─────────────────────────────────\n\nCONTENT\n';
+    output += artifact.content_text + '\n';
   } else if (!artifact.entitled) {
-    output += `[Unlock to view full content - Run: skynet unlock ${slug}]\n`;
+    output += '\n\n' + renderInfo(`Run: skynet unlock ${slug} to view full content`);
   } else {
-    output += `[To view full content - Run: skynet artifact ${slug} --content]\n`;
+    output += '\n\n' + renderInfo(`Run: skynet artifact ${slug} --content to view full content`);
   }
 
   return output;
