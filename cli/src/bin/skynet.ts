@@ -14,6 +14,7 @@ import { analyzeCommand } from '../commands/analyze.js';
 import { optimizeCommand } from '../commands/optimize.js';
 import { analyzeSessionCommand } from '../commands/analyze-session.js';
 import { compressSessionCommand } from '../commands/compress-session.js';
+import { modeCommand } from '../commands/mode.js';
 import { renderError } from '../output/renderer.js';
 import { showSplash } from '../output/splash.js';
 
@@ -220,6 +221,21 @@ async function main() {
     .action(async () => {
       try {
         const output = await compressSessionCommand();
+        console.log(output);
+      } catch (err) {
+        console.error(renderError(err instanceof Error ? err.message : String(err)));
+        process.exit(1);
+      }
+    });
+
+  // ============ MODE COMMAND ============
+
+  program
+    .command('mode [newMode]')
+    .description('Set or display global optimization mode')
+    .action(async (newMode?: string) => {
+      try {
+        const output = await modeCommand(newMode as any);
         console.log(output);
       } catch (err) {
         console.error(renderError(err instanceof Error ? err.message : String(err)));

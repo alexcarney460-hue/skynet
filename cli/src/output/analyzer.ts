@@ -1,5 +1,6 @@
 import { ANSI } from './ansi.js';
 import { selectProfile, getRecommendations } from './recommendation-engine.js';
+import { getMode } from '../config/config.js';
 
 interface TokenMetrics {
   contextLoad: 'LOW' | 'MEDIUM' | 'HIGH';
@@ -53,11 +54,12 @@ export function analyzeTokens(): AnalysisResult {
     { name: 'padding_overhead', tokens: Math.floor(totalWaste * 0.18), percentage: 18 },
   ];
 
-  // Determine recommended profile based on metrics
+  // Determine recommended profile (respects global mode setting)
   const memUtilization = 40 + (seed * 3) % 50;
   const driftFactor = 10 + (seed * 2) % 30;
   const coherence = 95 - (seed * 0.5) % 30;
-  const profile = selectProfile(memUtilization, driftFactor, coherence);
+  const globalMode = getMode();
+  const profile = selectProfile(memUtilization, driftFactor, coherence, globalMode);
 
   // Get profile-based recommendations
   const recommendations = getRecommendations(profile);

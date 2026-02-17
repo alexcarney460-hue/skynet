@@ -57,12 +57,19 @@ export const PROFILES: Record<OptimizationProfile, ProfileConfig> = {
 
 /**
  * Determine optimal profile based on metrics.
+ * Falls back to BALANCED if forcedMode is not provided.
  */
 export function selectProfile(
   memoryUtilization: number,
   driftFactor: number,
-  coherenceScore: number
+  coherenceScore: number,
+  forcedMode?: OptimizationProfile
 ): OptimizationProfile {
+  // If mode is explicitly set, use it
+  if (forcedMode) {
+    return forcedMode;
+  }
+
   // High utilization + high drift + lower coherence → AGGRESSIVE
   if (memoryUtilization > 70 && driftFactor > 20 && coherenceScore < 85) {
     return 'AGGRESSIVE';

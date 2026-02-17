@@ -1,5 +1,6 @@
 import { ANSI } from './ansi.js';
 import { selectProfile, PROFILES } from './recommendation-engine.js';
+import { getMode } from '../config/config.js';
 
 type StatusLevel = 'LOW' | 'MODERATE' | 'DEGRADED' | 'CRITICAL';
 type RiskLevel = 'STABLE' | 'RISING' | 'ELEVATED' | 'CRITICAL';
@@ -86,8 +87,9 @@ export function analyzeSession(): SessionAnalysis {
     recommendedAction = 'MONITORING';
   }
 
-  // Determine recommended profile
-  const profile = selectProfile(memoryUtilization, driftFactor, coherenceScore);
+  // Determine recommended profile (respects global mode setting)
+  const globalMode = getMode();
+  const profile = selectProfile(memoryUtilization, driftFactor, coherenceScore, globalMode);
 
   return {
     metrics: {
