@@ -62,7 +62,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...
 ### 3. Create Webhook Endpoint
 
 - Dashboard > Webhooks > Add endpoint
-- URL: `https://skynet.io/api/stripe/webhook` (after deployment)
+- URL: `https://skynetx.io/api/stripe/webhook` (after deployment)
 - Events: `checkout.session.completed`
 - Signing secret: `whsec_...`
 
@@ -89,7 +89,7 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 ### 3. Create Webhook
 
 - Settings > Webhooks
-- URL: `https://skynet.io/api/crypto/webhook`
+- URL: `https://skynetx.io/api/crypto/webhook`
 - Events: `charge:confirmed`
 - Signing secret: `your_coinbase_webhook_secret`
 
@@ -120,11 +120,11 @@ COINBASE_COMMERCE_WEBHOOK_SECRET=your_coinbase_webhook_secret
 
 ### 4. Post-Deployment
 
-- Update Stripe webhook URL: `https://skynet.io/api/stripe/webhook`
-- Update Coinbase webhook URL: `https://skynet.io/api/crypto/webhook`
+- Update Stripe webhook URL: `https://skynetx.io/api/stripe/webhook`
+- Update Coinbase webhook URL: `https://skynetx.io/api/crypto/webhook`
 - Test endpoints:
-  - `https://skynet.io/api/v1/artifacts`
-  - `https://skynet.io/api/v1/me/entitlements` (should 401 if not auth)
+  - `https://skynetx.io/api/v1/artifacts`
+  - `https://skynetx.io/api/v1/me/entitlements` (should 401 if not auth)
 
 ---
 

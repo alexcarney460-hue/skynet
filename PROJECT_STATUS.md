@@ -209,7 +209,7 @@ Commands:
 | **Crypto** | Coinbase Commerce | Mature, webhook-compatible |
 | **CLI** | Node.js + Commander.js | Lightweight, portable, zero bloat |
 | **Hosting** | Vercel | Optimized for Next.js, edge functions |
-| **Domain** | skynet.io | Pre-configured |
+| **Domain** | skynetx.io | Pre-configured |
 
 ---
 

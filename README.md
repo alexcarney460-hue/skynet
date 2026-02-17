@@ -6,7 +6,7 @@ Skynet is a **capability infrastructure layer**, not a simple data API.
 
 - **Monetization**: Artifact-centric (individual $8.99 | full registry $29.99)
 - **Tech**: Next.js 14 (App Router) + Supabase + Stripe + Crypto payments
-- **Domain**: skynet.io
+- **Domain**: skynetx.io
 - **Design Philosophy**: Minimal, dark, technical, zero marketing fluff
 
 ---

@@ -110,7 +110,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=(leave blank for now)
 STRIPE_SECRET_KEY=(leave blank for now)
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=https://skynetx.io
 ```
 
 ### 6. Test Locally
