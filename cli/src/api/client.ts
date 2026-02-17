@@ -1,6 +1,6 @@
 import { Artifact, Entitlements, ApiResponse } from '../types.js';
 
-const API_BASE = process.env.SKYNET_API_URL || 'https://skynet.io/api';
+const API_BASE = process.env.SKYNET_API_URL || 'https://skynetx-qnlraonz1-alex-carneys-projects.vercel.app/api';
 
 export class SkynetClient {
   private token?: string;
