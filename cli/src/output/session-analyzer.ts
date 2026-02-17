@@ -1,4 +1,5 @@
 import { ANSI } from './ansi.js';
+import { selectProfile, PROFILES } from './recommendation-engine.js';
 
 type StatusLevel = 'LOW' | 'MODERATE' | 'DEGRADED' | 'CRITICAL';
 type RiskLevel = 'STABLE' | 'RISING' | 'ELEVATED' | 'CRITICAL';
@@ -30,11 +31,13 @@ interface SessionAnalysis {
   context: ContextMetrics;
   assessment: StateAssessment;
   recommendedAction: Action;
+  recommendedProfile: string;
 }
 
 /**
  * Generate deterministic session analysis (seed-based simulation).
  * No real session tracking, pure infrastructure telemetry aesthetic.
+ * Uses profile-based actions instead of hardcoded values.
  */
 export function analyzeSession(): SessionAnalysis {
   const now = Math.floor(Date.now() / 1000);
@@ -83,6 +86,9 @@ export function analyzeSession(): SessionAnalysis {
     recommendedAction = 'MONITORING';
   }
 
+  // Determine recommended profile
+  const profile = selectProfile(memoryUtilization, driftFactor, coherenceScore);
+
   return {
     metrics: {
       memoryPressure,
@@ -103,6 +109,7 @@ export function analyzeSession(): SessionAnalysis {
       recoveryPotential,
     },
     recommendedAction,
+    recommendedProfile: profile,
   };
 }
 
@@ -111,7 +118,7 @@ export function analyzeSession(): SessionAnalysis {
  */
 export function renderSessionAnalysis(): string {
   const analysis = analyzeSession();
-  const { metrics, context, assessment, recommendedAction } = analysis;
+  const { metrics, context, assessment, recommendedAction, recommendedProfile } = analysis;
 
   const lines: string[] = [];
 
@@ -176,6 +183,11 @@ export function renderSessionAnalysis(): string {
 
   lines.push('');
   lines.push('─────────────────────────────────');
+  lines.push(ANSI.RED + 'OPTIMIZATION PROFILE' + ANSI.RESET);
+  lines.push('─────────────────────────────────');
+  lines.push('');
+  lines.push(`Recommended Profile  ${recommendedProfile}`);
+  lines.push('');
   lines.push(ANSI.RED + 'RECOMMENDED ACTION' + ANSI.RESET);
   lines.push('─────────────────────────────────');
   lines.push('');

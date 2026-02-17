@@ -1,4 +1,5 @@
 import { ANSI } from './ansi.js';
+import { selectProfile, getRecommendations } from './recommendation-engine.js';
 
 interface TokenMetrics {
   contextLoad: 'LOW' | 'MEDIUM' | 'HIGH';
@@ -17,11 +18,13 @@ interface AnalysisResult {
   metrics: TokenMetrics;
   wasteSources: WasteSource[];
   recommendations: string[];
+  recommendedProfile: string;
 }
 
 /**
  * Generate deterministic token analysis (no API calls).
  * Seed-based to ensure consistent output for testing.
+ * Uses profile-based recommendations instead of hardcoded values.
  */
 export function analyzeTokens(): AnalysisResult {
   // Deterministic seed-based metrics
@@ -50,28 +53,16 @@ export function analyzeTokens(): AnalysisResult {
     { name: 'padding_overhead', tokens: Math.floor(totalWaste * 0.18), percentage: 18 },
   ];
 
-  // Recommendations based on risk level
-  const recommendations: string[] = [];
+  // Determine recommended profile based on metrics
+  const memUtilization = 40 + (seed * 3) % 50;
+  const driftFactor = 10 + (seed * 2) % 30;
+  const coherence = 95 - (seed * 0.5) % 30;
+  const profile = selectProfile(memUtilization, driftFactor, coherence);
 
-  if (metrics.memoryOverhead > 500) {
-    recommendations.push('→ Reduce memory buffer to 512 tokens');
-  }
-  if (metrics.redundancyRisk !== 'NONE') {
-    recommendations.push('→ Remove redundant instructions');
-  }
-  if (metrics.compressionPotential === 'SIGNIFICANT' || metrics.compressionPotential === 'CRITICAL') {
-    recommendations.push('→ Implement response compression');
-    recommendations.push('→ Use compact JSON formatting');
-  }
-  if (wasteSources[2].tokens > 50) {
-    recommendations.push('→ Trim response templates');
-  }
+  // Get profile-based recommendations
+  const recommendations = getRecommendations(profile);
 
-  if (recommendations.length === 0) {
-    recommendations.push('→ No immediate optimizations needed');
-  }
-
-  return { metrics, wasteSources, recommendations };
+  return { metrics, wasteSources, recommendations, recommendedProfile: profile };
 }
 
 /**
@@ -79,7 +70,7 @@ export function analyzeTokens(): AnalysisResult {
  */
 export function renderTokenAnalysis(): string {
   const analysis = analyzeTokens();
-  const { metrics, wasteSources, recommendations } = analysis;
+  const { metrics, wasteSources, recommendations, recommendedProfile } = analysis;
 
   const lines: string[] = [];
 
@@ -119,6 +110,11 @@ export function renderTokenAnalysis(): string {
 
   lines.push('');
   lines.push('─────────────────────────────────');
+  lines.push(ANSI.RED + 'PROFILE RECOMMENDATION' + ANSI.RESET);
+  lines.push('─────────────────────────────────');
+  lines.push('');
+  lines.push(`Optimization Profile  ${recommendedProfile}`);
+  lines.push('');
   lines.push(ANSI.RED + 'RECOMMENDATIONS' + ANSI.RESET);
   lines.push('─────────────────────────────────');
   lines.push('');

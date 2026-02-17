@@ -44,6 +44,8 @@ async function main() {
     .description('Skynet - Registry of Performance-Optimized Agent Systems')
     .version(VERSION);
 
+  // ============ REGISTRY COMMANDS ============
+
   // status command
   program
     .command('status')
@@ -101,34 +103,6 @@ async function main() {
       }
     });
 
-  // auth login command
-  program
-    .command('auth:login')
-    .description('Authenticate with Skynet')
-    .action(async () => {
-      try {
-        const output = await authLoginCommand();
-        console.log(output);
-      } catch (err) {
-        console.error(renderError(err instanceof Error ? err.message : String(err)));
-        process.exit(1);
-      }
-    });
-
-  // auth logout command
-  program
-    .command('auth:logout')
-    .description('Clear authentication token')
-    .action(async () => {
-      try {
-        const output = await authLogoutCommand();
-        console.log(output);
-      } catch (err) {
-        console.error(renderError(err instanceof Error ? err.message : String(err)));
-        process.exit(1);
-      }
-    });
-
   // unlock command
   program
     .command('unlock [slug]')
@@ -144,7 +118,38 @@ async function main() {
       }
     });
 
-  // demo command
+  // ============ AUTH COMMANDS ============
+
+  const authCmd = program.command('auth').description('Authentication & identity');
+
+  authCmd
+    .command('login')
+    .description('Authenticate with Skynet')
+    .action(async () => {
+      try {
+        const output = await authLoginCommand();
+        console.log(output);
+      } catch (err) {
+        console.error(renderError(err instanceof Error ? err.message : String(err)));
+        process.exit(1);
+      }
+    });
+
+  authCmd
+    .command('logout')
+    .description('Clear authentication token')
+    .action(async () => {
+      try {
+        const output = await authLogoutCommand();
+        console.log(output);
+      } catch (err) {
+        console.error(renderError(err instanceof Error ? err.message : String(err)));
+        process.exit(1);
+      }
+    });
+
+  // ============ DEMO COMMAND ============
+
   program
     .command('demo')
     .description('Run interactive demo (for videos/presentations)')
@@ -158,11 +163,13 @@ async function main() {
       }
     });
 
-  // analyze command
-  program
-    .command('analyze')
-    .description('Token efficiency analysis & diagnostics')
-    .option('--tokens', 'Show token analysis')
+  // ============ ANALYZE COMMANDS ============
+
+  const analyzeCmd = program.command('analyze').description('Analysis & diagnostics');
+
+  analyzeCmd
+    .command('tokens')
+    .description('Token efficiency analysis & waste detection')
     .action(async () => {
       try {
         const output = await analyzeCommand();
@@ -173,8 +180,7 @@ async function main() {
       }
     });
 
-  // analyze session command
-  program
+  analyzeCmd
     .command('session')
     .description('Session context stability & memory state inspection')
     .action(async () => {
@@ -187,9 +193,12 @@ async function main() {
       }
     });
 
-  // optimize command
-  program
-    .command('optimize')
+  // ============ OPTIMIZE COMMANDS ============
+
+  const optimizeCmd = program.command('optimize').description('Optimization & tuning');
+
+  optimizeCmd
+    .command('tokens')
     .description('Activate token optimization mode')
     .action(async () => {
       try {
@@ -201,10 +210,13 @@ async function main() {
       }
     });
 
-  // compress command
-  program
-    .command('compress')
-    .description('Session context compression & deduplication')
+  // ============ COMPRESS COMMANDS ============
+
+  const compressCmd = program.command('compress').description('Context compression & deduplication');
+
+  compressCmd
+    .command('session')
+    .description('Session context footprint reduction')
     .action(async () => {
       try {
         const output = await compressSessionCommand();
