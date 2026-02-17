@@ -11,7 +11,20 @@ Skynet is a **capability infrastructure layer**, not a simple data API.
 
 ---
 
-## API Foundation (Phase 1)
+## Architecture
+
+### Interfaces
+
+**Web API (Next.js Routes)**
+- RESTful `/v1` endpoints
+- Public + authenticated access
+- Server-side entitlements enforcement
+
+**Terminal CLI (`cli/`)**
+- Standalone Node.js application
+- Lightweight (~5MB bundled)
+- System-style output (no decorations)
+- All business logic via API calls
 
 ### Core Endpoints
 
@@ -28,6 +41,18 @@ User owns artifact IF:
 - `artifact_id` unlocked (individual artifact)
 
 Centralized in `lib/entitlements.ts`.
+
+### CLI Commands
+
+```
+skynet status              System status
+skynet artifacts           List artifacts
+skynet artifact <slug>     View artifact
+skynet entitlements        Show unlocks
+skynet auth:login          Magic link auth
+```
+
+See `cli/README.md` for full command reference.
 
 ---
 
