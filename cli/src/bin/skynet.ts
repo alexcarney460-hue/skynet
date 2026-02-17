@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { Program } from 'commander';
+import { program } from 'commander';
 import { SkynetClient } from '../api/client.js';
 import { getToken } from '../auth/storage.js';
 import { statusCommand } from '../commands/status.js';
@@ -14,8 +14,6 @@ import { renderError } from '../output/renderer.js';
 const VERSION = '1.0.0';
 
 async function main() {
-  const program = new Program();
-
   program
     .name('skynet')
     .description('Skynet - Registry of Performance-Optimized Agent Systems')
@@ -34,7 +32,7 @@ async function main() {
         const output = await statusCommand(client);
         console.log(output);
       } catch (err) {
-        console.error(error(err instanceof Error ? err.message : String(err)));
+        console.error(renderError(err instanceof Error ? err.message : String(err)));
         process.exit(1);
       }
     });
@@ -48,7 +46,7 @@ async function main() {
         const output = await artifactsCommand(client);
         console.log(output);
       } catch (err) {
-        console.error(error(err instanceof Error ? err.message : String(err)));
+        console.error(renderError(err instanceof Error ? err.message : String(err)));
         process.exit(1);
       }
     });
@@ -63,7 +61,7 @@ async function main() {
         const output = await artifactCommand(client, slug, options.content || false);
         console.log(output);
       } catch (err) {
-        console.error(error(err instanceof Error ? err.message : String(err)));
+        console.error(renderError(err instanceof Error ? err.message : String(err)));
         process.exit(1);
       }
     });
@@ -77,7 +75,7 @@ async function main() {
         const output = await entitlementsCommand(client);
         console.log(output);
       } catch (err) {
-        console.error(error(err instanceof Error ? err.message : String(err)));
+        console.error(renderError(err instanceof Error ? err.message : String(err)));
         process.exit(1);
       }
     });
@@ -91,7 +89,7 @@ async function main() {
         const output = await authLoginCommand();
         console.log(output);
       } catch (err) {
-        console.error(error(err instanceof Error ? err.message : String(err)));
+        console.error(renderError(err instanceof Error ? err.message : String(err)));
         process.exit(1);
       }
     });

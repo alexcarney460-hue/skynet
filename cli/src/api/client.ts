@@ -15,9 +15,9 @@ export class SkynetClient {
 
   async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_BASE}${endpoint}`;
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
     if (this.token) {
@@ -34,7 +34,7 @@ export class SkynetClient {
         throw new Error(`HTTP ${response.status}`);
       }
 
-      const data: ApiResponse<T> = await response.json();
+      const data = await response.json() as ApiResponse<T>;
       if (data.status === 'error') {
         throw new Error(data.message || 'API error');
       }
