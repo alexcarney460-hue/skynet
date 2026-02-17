@@ -10,6 +10,7 @@ import { entitlementsCommand } from '../commands/entitlements.js';
 import { authLoginCommand, authLogoutCommand } from '../commands/auth.js';
 import { unlockCommand } from '../commands/unlock.js';
 import { demoCommand } from '../commands/demo.js';
+import { analyzeCommand } from '../commands/analyze.js';
 import { renderError } from '../output/renderer.js';
 import { showSplash } from '../output/splash.js';
 
@@ -147,6 +148,21 @@ async function main() {
     .action(async () => {
       try {
         const output = await demoCommand(client);
+        console.log(output);
+      } catch (err) {
+        console.error(renderError(err instanceof Error ? err.message : String(err)));
+        process.exit(1);
+      }
+    });
+
+  // analyze command
+  program
+    .command('analyze')
+    .description('Token efficiency analysis & diagnostics')
+    .option('--tokens', 'Show token analysis')
+    .action(async () => {
+      try {
+        const output = await analyzeCommand();
         console.log(output);
       } catch (err) {
         console.error(renderError(err instanceof Error ? err.message : String(err)));
