@@ -12,6 +12,7 @@ import { unlockCommand } from '../commands/unlock.js';
 import { demoCommand } from '../commands/demo.js';
 import { analyzeCommand } from '../commands/analyze.js';
 import { optimizeCommand } from '../commands/optimize.js';
+import { analyzeSessionCommand } from '../commands/analyze-session.js';
 import { renderError } from '../output/renderer.js';
 import { showSplash } from '../output/splash.js';
 
@@ -164,6 +165,20 @@ async function main() {
     .action(async () => {
       try {
         const output = await analyzeCommand();
+        console.log(output);
+      } catch (err) {
+        console.error(renderError(err instanceof Error ? err.message : String(err)));
+        process.exit(1);
+      }
+    });
+
+  // analyze session command
+  program
+    .command('session')
+    .description('Session context stability & memory state inspection')
+    .action(async () => {
+      try {
+        const output = await analyzeSessionCommand();
         console.log(output);
       } catch (err) {
         console.error(renderError(err instanceof Error ? err.message : String(err)));
