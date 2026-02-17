@@ -1,28 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createServerClient, CookieOptions } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 import { userOwnsArtifact } from '@/lib/entitlements';
-
-async function createClient() {
-  const cookieStore = cookies();
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set(name, value, options);
-        },
-        remove(name: string, options: CookieOptions) {
-          cookieStore.set(name, '', { ...options, maxAge: 0 });
-        },
-      },
-    }
-  );
-}
 
 /**
  * GET /v1/artifacts/[slug]
@@ -36,7 +14,10 @@ export async function GET(
 ) {
   try {
     const { slug } = await params;
-    const supabase = await createClient();
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
 
     // Fetch artifact (preview fields always available)
     const { data: artifact, error: artifactError } = await supabase
@@ -52,12 +33,29 @@ export async function GET(
       );
     }
 
-    // Check authentication
-    const { data: { user } } = await supabase.auth.getUser();
+    // Try to get user from auth header (Bearer token)
+    const authHeader = _request.headers.get('authorization');
     let entitled = false;
+    let userId: string | null = null;
 
-    if (user) {
-      entitled = await userOwnsArtifact(user.id, artifact.id, supabase);
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.slice(7);
+      try {
+        // Create authenticated client with user token
+        const authSupabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          { global: { headers: { Authorization: `Bearer ${token}` } } }
+        );
+        
+        const { data: { user } } = await authSupabase.auth.getUser();
+        if (user) {
+          userId = user.id;
+          entitled = await userOwnsArtifact(user.id, artifact.id, supabase);
+        }
+      } catch {
+        // Token invalid, continue as unauthenticated
+      }
     }
 
     // Return response based on entitlement

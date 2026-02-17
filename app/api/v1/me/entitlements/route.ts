@@ -1,40 +1,33 @@
 import { NextResponse } from 'next/server';
-import { createServerClient, CookieOptions } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 import { getUserEntitlements } from '@/lib/entitlements';
-
-async function createClient() {
-  const cookieStore = cookies();
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set(name, value, options);
-        },
-        remove(name: string, options: CookieOptions) {
-          cookieStore.set(name, '', { ...options, maxAge: 0 });
-        },
-      },
-    }
-  );
-}
 
 /**
  * GET /v1/me/entitlements
- * Auth required.
+ * Auth required (Bearer token in Authorization header).
  * Returns: { full_unlock, unlocked_artifacts: UUID[] }
  * Source of truth for client/agent entitlements.
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const supabase = await createClient();
+    // Extract Bearer token from Authorization header
+    const authHeader = request.headers.get('authorization');
+    
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { status: 'error', message: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
-    // Extract user from auth context
+    const token = authHeader.slice(7);
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { global: { headers: { Authorization: `Bearer ${token}` } } }
+    );
+
+    // Get authenticated user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (userError || !user) {
@@ -45,7 +38,12 @@ export async function GET() {
     }
 
     // Get entitlements
-    const entitlements = await getUserEntitlements(user.id, supabase);
+    const publicSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const entitlements = await getUserEntitlements(user.id, publicSupabase);
 
     return NextResponse.json({
       status: 'ok',
