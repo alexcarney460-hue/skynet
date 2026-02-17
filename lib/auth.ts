@@ -1,35 +1,38 @@
-import { createServerClient, CookieOptions } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 
-export async function createAuthClient() {
-  const cookieStore = cookies();
-
-  return createServerClient(
+/**
+ * Create Supabase client for server-side operations.
+ * Use Bearer token from Authorization header for authenticated requests.
+ */
+export function createAuthClient(token?: string) {
+  const client = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set(name, value, options);
-        },
-        remove(name: string, options: CookieOptions) {
-          cookieStore.set(name, '', { ...options, maxAge: 0 });
-        },
-      },
-    }
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
+
+  if (token) {
+    // Return client with token in headers for authenticated operations
+    return createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { 
+        global: { 
+          headers: { Authorization: `Bearer ${token}` } 
+        } 
+      }
+    );
+  }
+
+  return client;
 }
 
 /**
- * Get authenticated user from request context.
- * Returns userId or null if not authenticated.
+ * Get authenticated user from Bearer token.
+ * Token should be passed from Authorization header.
  */
-export async function getAuthUser() {
+export async function getAuthUser(token: string) {
   try {
-    const supabase = await createAuthClient();
+    const supabase = createAuthClient(token);
     const { data: { user }, error } = await supabase.auth.getUser();
     
     if (error || !user) return null;
