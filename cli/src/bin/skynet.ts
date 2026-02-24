@@ -16,6 +16,7 @@ import { analyzeSessionCommand } from '../commands/analyze-session.js';
 import { compressSessionCommand } from '../commands/compress-session.js';
 import { modeCommand } from '../commands/mode.js';
 import { renderError } from '../output/renderer.js';
+import { metricsStatusCommand } from '../commands/metrics-status.js';
 import { showSplash } from '../output/splash.js';
 
 const VERSION = '1.0.0';
@@ -236,6 +237,25 @@ async function main() {
     .action(async (newMode?: string) => {
       try {
         const output = await modeCommand(newMode as any);
+        console.log(output);
+      } catch (err) {
+        console.error(renderError(err instanceof Error ? err.message : String(err)));
+        process.exit(1);
+      }
+    });
+
+  // ============ METRICS COMMANDS ============
+
+  const metricsCmd = program.command('metrics').description('Phase 2 metrics & observability');
+
+  metricsCmd
+    .command('status')
+    .description('Summarize recent Phase 2 JSONL metrics (latency, errors, top routes)')
+    .option('--path <path>', 'Path to metrics JSONL log', process.env.SKYNET_METRICS_LOG_PATH)
+    .option('--since <minutes>', 'Lookback window in minutes', (v) => parseInt(v, 10), 60)
+    .action(async (options: { path?: string; since?: number }) => {
+      try {
+        const output = await metricsStatusCommand({ path: options.path, sinceMinutes: options.since });
         console.log(output);
       } catch (err) {
         console.error(renderError(err instanceof Error ? err.message : String(err)));

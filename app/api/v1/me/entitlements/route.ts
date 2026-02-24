@@ -1,33 +1,23 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getUserEntitlements } from '@/lib/entitlements';
+import { appendDriftMetric, appendTokenUsage } from '@/lib/telemetry';
 
-/**
- * GET /v1/me/entitlements
- * Auth required (Bearer token in Authorization header).
- * Returns: { full_unlock, unlocked_artifacts: UUID[] }
- * Source of truth for client/agent entitlements.
- */
-export async function GET(request: Request) {
+const ROUTE_PATH = '/api/v1/me/entitlements';
+
+export async function GET(request: NextRequest) {
+  const startedAt = Date.now();
   try {
-    // Extract Bearer token from Authorization header
     const authHeader = request.headers.get('authorization');
-    
     if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { status: 'error', message: 'Unauthorized' },
-        { status: 401 }
-      );
+      const body = { status: 'error', message: 'Unauthorized' };
+      await logTelemetry(request, body, 401, Date.now() - startedAt);
+      return NextResponse.json(body, { status: 401 });
     }
 
     const token = authHeader.slice(7);
-    
-    // Verify env vars
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL');
-    }
-    if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY');
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Supabase env vars missing');
     }
 
     const supabase = createClient(
@@ -36,38 +26,69 @@ export async function GET(request: Request) {
       { global: { headers: { Authorization: `Bearer ${token}` } } }
     );
 
-    // Get authenticated user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return NextResponse.json(
-        { status: 'error', message: 'Unauthorized' },
-        { status: 401 }
-      );
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) {
+      const body = { status: 'error', message: 'Unauthorized' };
+      await logTelemetry(request, body, 401, Date.now() - startedAt);
+      return NextResponse.json(body, { status: 401 });
     }
 
-    // Get entitlements (use service role to bypass RLS)
-    const publicSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    const adminClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
-    const entitlements = await getUserEntitlements(user.id, publicSupabase);
-
-    return NextResponse.json({
+    const entitlements = await getUserEntitlements(user.id, adminClient);
+    const payload = {
       status: 'ok',
       data: {
         user_id: user.id,
         full_unlock: entitlements.hasFullUnlock,
         unlocked_artifacts: entitlements.unlockedArtifactIds,
       },
-    });
+    };
+
+    await logTelemetry(request, payload, 200, Date.now() - startedAt);
+    return NextResponse.json(payload);
   } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    console.error('GET /v1/me/entitlements error:', errorMsg);
-    return NextResponse.json(
-      { status: 'error', message: `Failed to fetch entitlements: ${errorMsg}` },
-      { status: 500 }
-    );
+    const message = err instanceof Error ? err.message : String(err);
+    const body = { status: 'error', message: `Failed to fetch entitlements: ${message}` };
+    await logTelemetry(request, body, 500, Date.now() - startedAt);
+    return NextResponse.json(body, { status: 500 });
   }
+}
+
+async function logTelemetry(
+  request: NextRequest,
+  payload: Record<string, unknown>,
+  status: number,
+  latencyMs: number
+) {
+  const agent = request.headers.get('x-agent-id') ?? undefined;
+  const sessionId = request.headers.get('x-session-id') ?? undefined;
+  const requestBytes = Buffer.byteLength(request.url, 'utf8');
+  const responseBytes = Buffer.byteLength(JSON.stringify(payload), 'utf8');
+  const approxTokensIn = Math.max(1, Math.round(requestBytes / 4));
+  const approxTokensOut = Math.max(1, Math.round(responseBytes / 4));
+
+  await appendTokenUsage({
+    route: ROUTE_PATH,
+    method: request.method,
+    requestBytes,
+    responseBytes,
+    approxTokensIn,
+    approxTokensOut,
+    agent,
+    sessionId,
+    status,
+    latencyMs,
+  });
+
+  await appendDriftMetric({
+    route: ROUTE_PATH,
+    method: request.method,
+    status,
+    latencyMs,
+    payload,
+  });
 }

@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { extractAgentSession, getOrCreateRequestId, logPhase2Metric } from '@/lib/phase2-metrics';
 
 /**
  * GET/POST /api/v1/half-life
  * Session Half-Life Estimator endpoint
- * 
+ *
  * Estimates session stability and remaining useful lifetime.
  */
 
 export async function GET(request: NextRequest) {
+  const t0 = Date.now();
+  const requestId = getOrCreateRequestId(request);
+  const { agentId, sessionId } = extractAgentSession(request);
+
   try {
     const searchParams = request.nextUrl.searchParams;
 
@@ -21,13 +26,8 @@ export async function GET(request: NextRequest) {
     const errorCount = parseInt(searchParams.get('errors') || '0', 10);
     const systemMode = (searchParams.get('systemMode') || 'production') as 'demo' | 'production' | 'diagnostic';
 
-    // Default histories
-    const memHistory = [40, 42, 44, 46, 48].map((x) => x - 3 + Math.floor(sessionAgeMinutes / 30) * 3);
-    const driftHistory = [20, 21, 23, 25, 26].map((x) => x - 1 + Math.floor(sessionAgeMinutes / 30) * 1);
-    const burnHistory = [30, 32, 34, 35, 36];
-
     // Inline half-life estimation (no CLI dependency)
-    const tokenBurnRate = (tokenTotal - tokenRemaining) / sessionAgeMinutes;
+    const tokenBurnRate = (tokenTotal - tokenRemaining) / Math.max(sessionAgeMinutes, 1);
     const minutesUntilTokenExhaustion = tokenRemaining / Math.max(tokenBurnRate, 1);
     const decayRate = (memoryPressure + contextDrift) / 100;
     const estimatedHalfLifeMinutes = minutesUntilTokenExhaustion / (1 + decayRate);
@@ -52,12 +52,47 @@ export async function GET(request: NextRequest) {
       ].filter(Boolean),
     };
 
+    await logPhase2Metric({
+      v: 1,
+      ts: new Date().toISOString(),
+      kind: 'gate',
+      requestId,
+      route: '/api/v1/half-life',
+      method: 'GET',
+      status: 200,
+      latencyMs: Date.now() - t0,
+      agentId,
+      sessionId,
+      memoryUsedPercent: memoryPressure,
+      contextDriftPercent: contextDrift,
+      sessionAgeSeconds: sessionAgeMinutes * 60,
+      tokenBurnRatePerMin: Math.round(tokenBurnRate * 10) / 10,
+      halfLifeMinutesEstimated: Math.round(estimatedHalfLifeMinutes),
+      systemMode,
+    });
+
     return NextResponse.json({
       timestamp: new Date().toISOString(),
       halfLife,
     });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Half-life estimation error:', error);
+
+    await logPhase2Metric({
+      v: 1,
+      ts: new Date().toISOString(),
+      kind: 'error',
+      requestId,
+      route: '/api/v1/half-life',
+      method: 'GET',
+      status: 500,
+      latencyMs: Date.now() - t0,
+      agentId,
+      sessionId,
+      error: { message: error instanceof Error ? error.message : 'Unknown error', name: error instanceof Error ? error.name : undefined },
+    });
+
     return NextResponse.json(
       {
         error: 'Failed to estimate session half-life',
@@ -69,6 +104,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const t0 = Date.now();
+  const requestId = getOrCreateRequestId(request);
+  const { agentId, sessionId } = extractAgentSession(request);
+
   try {
     const body = await request.json();
 
@@ -87,7 +126,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Inline half-life estimation (no CLI dependency)
-    const tokenBurnRate = (tokenBudgetTotal - tokenBudgetRemaining) / sessionAgeMinutes;
+    const tokenBurnRate = (tokenBudgetTotal - tokenBudgetRemaining) / Math.max(sessionAgeMinutes, 1);
     const minutesUntilTokenExhaustion = tokenBudgetRemaining / Math.max(tokenBurnRate, 1);
     const decayRate = (currentMemoryPressurePercent + currentContextDriftPercent) / 100;
     const estimatedHalfLifeMinutes = minutesUntilTokenExhaustion / (1 + decayRate);
@@ -112,12 +151,47 @@ export async function POST(request: NextRequest) {
       ].filter(Boolean),
     };
 
+    await logPhase2Metric({
+      v: 1,
+      ts: new Date().toISOString(),
+      kind: 'gate',
+      requestId,
+      route: '/api/v1/half-life',
+      method: 'POST',
+      status: 200,
+      latencyMs: Date.now() - t0,
+      agentId,
+      sessionId,
+      memoryUsedPercent: currentMemoryPressurePercent,
+      contextDriftPercent: currentContextDriftPercent,
+      sessionAgeSeconds: sessionAgeMinutes * 60,
+      tokenBurnRatePerMin: Math.round(tokenBurnRate * 10) / 10,
+      halfLifeMinutesEstimated: Math.round(estimatedHalfLifeMinutes),
+      systemMode,
+    });
+
     return NextResponse.json({
       timestamp: new Date().toISOString(),
       halfLife,
     });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Half-life estimation error:', error);
+
+    await logPhase2Metric({
+      v: 1,
+      ts: new Date().toISOString(),
+      kind: 'error',
+      requestId,
+      route: '/api/v1/half-life',
+      method: 'POST',
+      status: 500,
+      latencyMs: Date.now() - t0,
+      agentId,
+      sessionId,
+      error: { message: error instanceof Error ? error.message : 'Unknown error', name: error instanceof Error ? error.name : undefined },
+    });
+
     return NextResponse.json(
       {
         error: 'Failed to estimate session half-life',

@@ -52,26 +52,31 @@ Predicts session stability decay & remaining lifetime.
 ✅ **Runtime-ready** — Lightweight enough for frequent agent checks  
 ✅ **Framework-agnostic** — Works with OpenClaw, LangChain, custom agents  
 
-### HTTP API (`/api/v1/`)
+### HTTP API (`/api/v1/*`)
 
 ```
-GET  /v1/pressure                  Evaluate context pressure
-GET  /v1/verbosity                 Assess verbosity drift
-GET  /v1/half-life                 Estimate session stability
-GET  /v1/artifacts                 (Optional) List performance artifacts
+GET|POST  /api/v1/pressure      Evaluate context pressure
+GET|POST  /api/v1/verbosity     Assess verbosity drift
+GET|POST  /api/v1/half-life     Estimate session stability
+GET|POST  /api/v1/drift         Monitor system health
+GET       /api/v1/artifacts     (Optional) List performance artifacts
 ```
 
-**All endpoints**: Query params for REST | JSON POST for structured input
+**All endpoints**: accept query params (GET) or JSON bodies (POST)
 
-**All responses**: Deterministic JSON with metrics + recommendations + action signals
+**All responses**: deterministic JSON with metrics + recommendations + action signals
 
 ### CLI (`cli/` - Optional)
 
+The current CLI focuses on **registry + diagnostics workflows**.
+
 ```bash
-$ skynet status                 # System status + drift metrics
-$ skynet pressure              # Evaluate pressure level
-$ skynet verbosity             # Check verbosity drift
-$ skynet half-life             # Estimate session decay
+$ skynet                 # Runs the demo when called with no args
+$ skynet status          # System status
+$ skynet artifacts       # List artifacts
+$ skynet artifact <slug> # Show artifact details
+$ skynet analyze tokens  # Token efficiency analysis
+$ skynet optimize tokens # Activate token optimization mode
 ```
 
 ---
@@ -98,9 +103,9 @@ if (halfLife.estimatedRemainingLifeMinutes < 10) skipRemainingWork();
 
 ```typescript
 // Register cognitive middleware on agent startup
-agent.use(createSkyntNetMiddleware({
+agent.use(createSkynetMiddleware({
   endpoint: 'https://skynetx.io/api/v1',
-  checkInterval: 30,  // seconds
+  checkInterval: 30, // seconds
   thresholds: {
     critical: 'terminate',
     high: 'compress',
@@ -122,12 +127,14 @@ npm run dev
 # http://localhost:3000/api/v1/pressure
 ```
 
-**CLI** (Global):
+**CLI** (Local dev link):
 ```bash
 cd cli
 npm install
 npm link
-skynet pressure
+
+skynet
+skynet status
 ```
 
 ### Environment
@@ -151,25 +158,25 @@ CLI: npm install -g @skynet/cli
 
 ## Capabilities Breakdown
 
-### Drift Detection (`/v1/drift`)
+### Drift Detection (`/api/v1/drift`)
 **Input**: sessionAge, memoryUsage, contextDrift, systemMode  
 **Output**: state (OPTIMAL|STABLE|DEGRADED|AT_RISK), metrics, warnings  
-**Decision gate**: Suitable for expensive operations?
+**Decision gate**: suitable for expensive operations?
 
-### Context Pressure (`/v1/pressure`)
+### Context Pressure (`/api/v1/pressure`)
 **Input**: memory%, tokenBurn, contextDrift, sessionAge, budgets  
 **Output**: level (LOW|MODERATE|HIGH|CRITICAL), viability score, recommendations  
-**Decision gate**: Compress? Optimize? Terminate?
+**Decision gate**: compress? optimize? terminate?
 
-### Verbosity Drift (`/v1/verbosity`)
+### Verbosity Drift (`/api/v1/verbosity`)
 **Input**: recent output lengths, baseline, total tokens, budget  
 **Output**: state (OPTIMAL|DRIFTING|EXCESSIVE), policy, truncation limit  
-**Decision gate**: Enforce output limits? Switch to point form?
+**Decision gate**: enforce output limits? switch to point form?
 
-### Session Half-Life (`/v1/half-life`)
+### Session Half-Life (`/api/v1/half-life`)
 **Input**: sessionAge, trends (memory, drift, burn, errors), expected duration  
 **Output**: stability (STABLE|DECAYING|FRAGILE), decay rate, half-life minutes  
-**Decision gate**: Save checkpoint? Compress? Gracefully terminate?
+**Decision gate**: save checkpoint? compress? gracefully terminate?
 
 ---
 

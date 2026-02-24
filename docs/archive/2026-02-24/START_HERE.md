@@ -34,9 +34,11 @@ curl "https://skynetx.io/api/v1/pressure?memoryUsedPercent=55&tokenBurnRatePerMi
 ### Try the CLI
 ```bash
 npm install -g @skynet/cli
+
+skynet            # runs the demo when called with no args
 skynet status
-skynet pressure
-skynet forecast
+skynet artifacts
+skynet analyze tokens
 ```
 
 ### Try the Vision
@@ -186,10 +188,11 @@ Payback period: ~2 months
 - ✅ `/api/v1/drift` — System health monitoring
 
 ### CLI
+- ✅ `skynet` — Demo (runs when called with no args)
 - ✅ `skynet status` — System overview
-- ✅ `skynet pressure` — Pressure evaluation
-- ✅ `skynet verbosity` — Verbosity check
-- ✅ `skynet half-life` — Decay estimation
+- ✅ `skynet artifacts` — List artifacts
+- ✅ `skynet analyze tokens` — Token efficiency analysis
+- ✅ `skynet optimize tokens` — Token optimization mode
 
 ### Documentation
 - ✅ 23 documents (strategy + specs + guides)
