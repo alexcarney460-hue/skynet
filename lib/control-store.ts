@@ -3,6 +3,7 @@ import 'server-only';
 import { randomUUID } from 'crypto';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { createClient } from '@supabase/supabase-js';
 import type {
   ControlAgent,
   ControlState,
@@ -12,6 +13,15 @@ import type {
 
 const DATA_ROOT = process.env.VERCEL ? path.join('/tmp', 'skynet-control') : path.join(process.cwd(), 'logs');
 const STATE_PATH = path.join(DATA_ROOT, 'control-state.json');
+const CONTROL_BUCKET = 'skynet-control';
+const CONTROL_OBJECT = 'control-state.json';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const useSupabaseStore = Boolean(supabaseUrl && serviceRoleKey);
+const supabaseAdmin = useSupabaseStore
+  ? createClient(supabaseUrl as string, serviceRoleKey as string, { auth: { persistSession: false } })
+  : null;
 
 const DEFAULT_STATE: ControlState = {
   agents: [
@@ -75,6 +85,11 @@ const DEFAULT_STATE: ControlState = {
 };
 
 async function ensureStateFile(): Promise<void> {
+  if (useSupabaseStore) {
+    await ensureSupabaseBucket();
+    return;
+  }
+
   try {
     await fs.access(STATE_PATH);
   } catch {
@@ -83,8 +98,64 @@ async function ensureStateFile(): Promise<void> {
   }
 }
 
+async function ensureSupabaseBucket() {
+  if (!supabaseAdmin) return;
+  const { data, error } = await supabaseAdmin.storage.getBucket(CONTROL_BUCKET);
+  if (error && error.message?.toLowerCase().includes('not found')) {
+    await supabaseAdmin.storage.createBucket(CONTROL_BUCKET, {
+      public: false,
+      fileSizeLimit: 1024 * 1024,
+    });
+    await supabaseAdmin.storage.from(CONTROL_BUCKET).upload(
+      CONTROL_OBJECT,
+      JSON.stringify(DEFAULT_STATE, null, 2),
+      { upsert: true, contentType: 'application/json' },
+    );
+    return;
+  }
+
+  if (!data) {
+    await supabaseAdmin.storage.from(CONTROL_BUCKET).upload(
+      CONTROL_OBJECT,
+      JSON.stringify(DEFAULT_STATE, null, 2),
+      { upsert: true, contentType: 'application/json' },
+    );
+  }
+}
+
+async function readFromSupabase(): Promise<ControlState | null> {
+  if (!supabaseAdmin) return null;
+  const { data, error } = await supabaseAdmin.storage.from(CONTROL_BUCKET).download(CONTROL_OBJECT);
+  if (error || !data) {
+    return null;
+  }
+  const text = await data.text();
+  try {
+    return JSON.parse(text) as ControlState;
+  } catch {
+    return null;
+  }
+}
+
+async function writeToSupabase(state: ControlState) {
+  if (!supabaseAdmin) return;
+  await ensureSupabaseBucket();
+  await supabaseAdmin.storage.from(CONTROL_BUCKET).upload(
+    CONTROL_OBJECT,
+    JSON.stringify(state, null, 2),
+    { upsert: true, contentType: 'application/json' },
+  );
+}
+
 export async function readControlState(): Promise<ControlState> {
   await ensureStateFile();
+  if (useSupabaseStore) {
+    const remote = await readFromSupabase();
+    if (remote) return remote;
+    await writeToSupabase(DEFAULT_STATE);
+    return DEFAULT_STATE;
+  }
+
   const raw = await fs.readFile(STATE_PATH, 'utf8');
   try {
     const parsed = JSON.parse(raw) as ControlState;
@@ -96,6 +167,11 @@ export async function readControlState(): Promise<ControlState> {
 }
 
 export async function writeControlState(state: ControlState): Promise<void> {
+  if (useSupabaseStore) {
+    await writeToSupabase(state);
+    return;
+  }
+
   await fs.mkdir(path.dirname(STATE_PATH), { recursive: true });
   await fs.writeFile(STATE_PATH, JSON.stringify(state, null, 2), 'utf8');
 }
