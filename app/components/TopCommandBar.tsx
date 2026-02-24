@@ -45,6 +45,9 @@ export function TopCommandBar({
             <div className="mt-2 space-y-1">
               <h1 className="text-3xl font-semibold text-white">{missionTitle}</h1>
               <p className="text-sm text-slate-200/80">{missionSubtitle}</p>
+              <p className="text-xs text-slate-300/80">
+                Start a session below to connect your agents and see live stability metrics.
+              </p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-6 text-sm text-slate-200/80">
@@ -73,9 +76,12 @@ export function TopCommandBar({
               </div>
               <p className="text-xs text-slate-300/80">{signalPercent}% stable</p>
             </div>
-            <button className="ml-auto rounded-full border border-white/30 bg-white/10 px-5 py-2 text-sm font-semibold text-white shadow-[0_0_25px_rgba(0,255,247,0.35)] transition hover:border-cyan-200 hover:bg-white/20">
-              Prime Runtime Checkpoint
-            </button>
+            <a
+              href="#session-control"
+              className="ml-auto rounded-full border border-white/30 bg-white/10 px-5 py-2 text-sm font-semibold text-white shadow-[0_0_25px_rgba(0,255,247,0.35)] transition hover:border-cyan-200 hover:bg-white/20"
+            >
+              Start Session
+            </a>
           </div>
         </div>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

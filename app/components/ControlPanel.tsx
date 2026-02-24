@@ -72,11 +72,14 @@ export function ControlPanel({ initialState }: Props) {
   };
 
   return (
-    <section className="rounded-3xl border border-white/10 bg-[#04030e]/90 p-6 text-sm text-slate-200 shadow-[0_0_45px_rgba(0,214,255,0.18)] backdrop-blur-2xl">
+    <section id="session-control" className="rounded-3xl border border-white/10 bg-[#04030e]/90 p-6 text-sm text-slate-200 shadow-[0_0_45px_rgba(0,214,255,0.18)] backdrop-blur-2xl">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.35em] text-cyan-200/80">Workflow Orchestrator</p>
-          <h2 className="text-2xl font-semibold text-white">Marketing Agent Control</h2>
+          <p className="text-xs uppercase tracking-[0.35em] text-cyan-200/80">Session Control</p>
+          <h2 className="text-2xl font-semibold text-white">Agent Session Control</h2>
+          <p className="mt-2 text-xs text-slate-300/80">
+            Start a session, watch the current step, and pause or resume agents when needed.
+          </p>
         </div>
         <span className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-cyan-100">
           {activeRuns.length} Active
@@ -87,25 +90,25 @@ export function ControlPanel({ initialState }: Props) {
         <div className="xl:col-span-2 space-y-4">
           <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-semibold text-white">Workflow Runs</h3>
+              <h3 className="text-base font-semibold text-white">Active Sessions</h3>
               {message && <span className="text-xs text-slate-300">{isPending ? 'Updating…' : message}</span>}
             </div>
             <div className="mt-3 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="text-left text-xs uppercase tracking-[0.2em] text-slate-400">
                   <tr>
-                    <th className="py-2 pr-3">Label</th>
-                    <th className="py-2 pr-3">Step</th>
-                    <th className="py-2 pr-3">Agent</th>
-                    <th className="py-2 pr-3">Status</th>
-                    <th className="py-2 pr-3">Actions</th>
+                    <th className="py-2 pr-3">Session</th>
+                    <th className="py-2 pr-3">Current Step</th>
+                    <th className="py-2 pr-3">Current Agent</th>
+                    <th className="py-2 pr-3">State</th>
+                    <th className="py-2 pr-3">Controls</th>
                   </tr>
                 </thead>
                 <tbody>
                   {state.runs.length === 0 && (
                     <tr>
                       <td colSpan={5} className="py-4 text-center text-slate-400">
-                        No workflow runs yet. Launch one from the form on the right.
+                        No sessions yet. Start one from the form on the right.
                       </td>
                     </tr>
                   )}
@@ -124,7 +127,7 @@ export function ControlPanel({ initialState }: Props) {
                             className="rounded-full border border-cyan-300/50 px-3 py-1 text-xs font-semibold text-cyan-100 hover:bg-cyan-500/10"
                             disabled={isPending}
                           >
-                            Advance Step
+                            Next Step
                           </button>
                         )}
                         {run.status !== 'completed' && (
@@ -133,7 +136,7 @@ export function ControlPanel({ initialState }: Props) {
                             className="rounded-full border border-rose-300/40 px-3 py-1 text-xs font-semibold text-rose-200 hover:bg-rose-500/10"
                             disabled={isPending}
                           >
-                            Cancel
+                            Stop Session
                           </button>
                         )}
                       </td>
@@ -147,9 +150,9 @@ export function ControlPanel({ initialState }: Props) {
 
         <div className="space-y-4">
           <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <h3 className="text-base font-semibold text-white">Launch Workflow</h3>
+            <h3 className="text-base font-semibold text-white">Start Session</h3>
             <div className="mt-3 space-y-3">
-              <label className="block text-xs uppercase tracking-[0.3em] text-slate-400">Template</label>
+              <label className="block text-xs uppercase tracking-[0.3em] text-slate-400">Session Type</label>
               <select
                 value={templateId}
                 onChange={(e) => setTemplateId(e.target.value)}
@@ -162,7 +165,7 @@ export function ControlPanel({ initialState }: Props) {
                 ))}
               </select>
 
-              <label className="block text-xs uppercase tracking-[0.3em] text-slate-400">Label</label>
+              <label className="block text-xs uppercase tracking-[0.3em] text-slate-400">Session Name</label>
               <input
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
@@ -170,7 +173,7 @@ export function ControlPanel({ initialState }: Props) {
                 placeholder="Launch title"
               />
 
-              <label className="block text-xs uppercase tracking-[0.3em] text-slate-400">Owner</label>
+              <label className="block text-xs uppercase tracking-[0.3em] text-slate-400">Requested By</label>
               <input
                 value={owner}
                 onChange={(e) => setOwner(e.target.value)}
@@ -183,13 +186,16 @@ export function ControlPanel({ initialState }: Props) {
                 disabled={isPending || !templateId}
                 className="mt-2 w-full rounded-2xl bg-gradient-to-r from-cyan-500 to-fuchsia-500 py-2 text-sm font-semibold text-white shadow-[0_0_25px_rgba(0,214,255,0.35)]"
               >
-                {isPending ? 'Launching…' : 'Prime Workflow'}
+                {isPending ? 'Starting…' : 'Start Session'}
               </button>
+              <p className="text-xs text-slate-300/80">
+                Starts the session and activates the first agent. You can pause or advance steps once it’s running.
+              </p>
             </div>
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <h3 className="text-base font-semibold text-white">Templates</h3>
+            <h3 className="text-base font-semibold text-white">Session Templates</h3>
             <ul className="mt-3 space-y-2 text-xs text-slate-300">
               {templates.map((template) => (
                 <li key={template.id} className="rounded-xl border border-white/5 bg-black/20 p-3">
@@ -203,7 +209,10 @@ export function ControlPanel({ initialState }: Props) {
       </div>
 
       <div className="mt-6">
-        <h3 className="text-base font-semibold text-white">Agent Status</h3>
+        <h3 className="text-base font-semibold text-white">Agent Health</h3>
+        <p className="mt-1 text-xs text-slate-300/80">
+          Shows which agent is active. Pause if an agent is stuck or resume to continue.
+        </p>
         <div className="mt-3 grid gap-4 lg:grid-cols-4 md:grid-cols-2">
           {state.agents.map((agent) => (
             <div
