@@ -30,9 +30,9 @@ export function GlobalMap({ nodes }: GlobalMapProps) {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.35em] text-cyan-200/80">
-            Mesh Coverage
+            Runtime Coverage
           </p>
-          <h2 className="text-2xl font-semibold text-white">Global Relay Map</h2>
+          <h2 className="text-2xl font-semibold text-white">Agent Runtime Map</h2>
         </div>
         <div className="text-right text-xs uppercase tracking-[0.35em] text-slate-400">
           <p>Nodes</p>
@@ -56,7 +56,7 @@ export function GlobalMap({ nodes }: GlobalMapProps) {
             </div>
           ))}
           <div className="pointer-events-none absolute inset-x-10 bottom-6 rounded-2xl border border-white/10 bg-black/40 p-3 text-center text-xs text-slate-300/80">
-            Placeholder mesh projection — plug telemetry renderer here.
+            Placeholder runtime projection — plug telemetry renderer here.
           </div>
         </div>
       </div>

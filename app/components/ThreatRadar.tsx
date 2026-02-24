@@ -28,20 +28,20 @@ export function ThreatRadar({ threats }: ThreatRadarProps) {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.35em] text-fuchsia-200/80">
-            Threat Vectors
+            Drift Vectors
           </p>
-          <h2 className="text-2xl font-semibold text-white">Orbital Radar Sweep</h2>
+          <h2 className="text-2xl font-semibold text-white">Runtime Drift Sweep</h2>
         </div>
         <span className="rounded-full border border-fuchsia-400/40 bg-fuchsia-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.4em] text-fuchsia-100">
-          Live
+          Runtime
         </span>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-3 text-sm text-slate-300/90">
           <p>
-            Monitoring synaptic threat channels with adaptive heuristics. Radar
-            plots show current incursion vectors scaled by intensity. Values are
+            Monitoring context drift channels with deterministic heuristics. Radar
+            plots show runtime drift vectors scaled by intensity. Values are
             synthetic for the shell and can be replaced with live telemetry.
           </p>
           <div className="grid grid-cols-2 gap-3 text-xs uppercase tracking-[0.35em] text-slate-400">

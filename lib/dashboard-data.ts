@@ -382,8 +382,8 @@ export async function getDashboardData(): Promise<DashboardData> {
   return {
     generatedAt: now.toISOString(),
     mission: {
-      title: 'Orbital Defense Mesh',
-      subtitle: 'Neon Skynet Sentinel · Canonical registry uplink',
+      title: 'Cognitive Stability Mesh',
+      subtitle: 'Deterministic runtime telemetry · canonical stability registry uplink',
       time: missionMeta.time,
       date: missionMeta.calendar,
       operatorsOnline,

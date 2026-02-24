@@ -40,7 +40,7 @@ export function TopCommandBar({
         <div className="flex flex-wrap items-center gap-6">
           <div className="flex-1 min-w-[240px]">
             <p className="text-xs uppercase tracking-[0.35em] text-fuchsia-200/80">
-              Skynet Command Link
+              Skynet Runtime Link
             </p>
             <div className="mt-2 space-y-1">
               <h1 className="text-3xl font-semibold text-white">{missionTitle}</h1>
@@ -50,20 +50,20 @@ export function TopCommandBar({
           <div className="flex flex-wrap items-center gap-6 text-sm text-slate-200/80">
             <div>
               <p className="text-[0.65rem] uppercase tracking-[0.4em] text-slate-400">
-                Mission Time
+                Session Half-Life
               </p>
               <p className="text-xl font-semibold text-white">{missionTime}</p>
               <p className="text-xs text-slate-300/80">{missionDate}</p>
             </div>
             <div>
               <p className="text-[0.65rem] uppercase tracking-[0.4em] text-slate-400">
-                Operators Online
+                Active Agent Instances
               </p>
               <p className="text-xl font-semibold text-white">{operatorsOnline}</p>
             </div>
             <div className="w-32">
               <p className="text-[0.65rem] uppercase tracking-[0.4em] text-slate-400">
-                Signal Integrity
+                Context Coherence
               </p>
               <div className="mt-1 h-2 rounded-full bg-white/10">
                 <div
@@ -74,7 +74,7 @@ export function TopCommandBar({
               <p className="text-xs text-slate-300/80">{signalPercent}% stable</p>
             </div>
             <button className="ml-auto rounded-full border border-white/30 bg-white/10 px-5 py-2 text-sm font-semibold text-white shadow-[0_0_25px_rgba(0,255,247,0.35)] transition hover:border-cyan-200 hover:bg-white/20">
-              Prime Countermeasure
+              Prime Runtime Checkpoint
             </button>
           </div>
         </div>
