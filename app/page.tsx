@@ -1,110 +1,201 @@
-import { GlobalMap } from './components/GlobalMap';
-import { MetricTile } from './components/MetricTile';
-import { ThreatRadar } from './components/ThreatRadar';
-import { TopCommandBar } from './components/TopCommandBar';
-import { ControlPanel } from './components/ControlPanel';
-import { getDashboardData } from '@/lib/dashboard-data';
-import { readControlState } from '@/lib/control-store';
-
-export default async function Home() {
-  const [data, controlState] = await Promise.all([
-    getDashboardData(),
-    readControlState(),
-  ]);
-
+export default function LandingPage() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#030011] text-slate-100">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(255,0,153,0.3),transparent_55%),radial-gradient(circle_at_80%_0%,rgba(0,214,255,0.35),transparent_45%),linear-gradient(120deg,rgba(7,4,54,0.9),rgba(1,1,20,0.95))]" />
-      <div className="pointer-events-none absolute inset-0 opacity-40 mix-blend-screen">
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(180deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:64px_64px]" />
-      </div>
+    <div className="min-h-screen bg-white text-slate-900">
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700" />
+          <span className="text-sm font-semibold tracking-[0.3em] text-slate-700">
+            SKYNETX
+          </span>
+        </div>
+        <nav className="flex items-center gap-6 text-sm text-slate-600">
+          <a href="#what-it-does" className="hover:text-slate-900">What it does</a>
+          <a href="#why-skynet" className="hover:text-slate-900">Why Skynet</a>
+          <a href="#how-it-works" className="hover:text-slate-900">How it works</a>
+          <a href="#who-its-for" className="hover:text-slate-900">Who it’s for</a>
+          <a
+            href="/console"
+            className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+          >
+            Open Console
+          </a>
+        </nav>
+      </header>
 
-      <main className="relative z-10 mx-auto flex max-w-[1400px] flex-col gap-8 px-6 py-10 lg:px-10">
-        <TopCommandBar
-          missionTitle={data.mission.title}
-          missionSubtitle={data.mission.subtitle}
-          missionTime={data.mission.time}
-          missionDate={data.mission.date}
-          operatorsOnline={data.mission.operatorsOnline}
-          signalStrength={data.mission.signalStrength}
-          commandQueue={data.commandQueue}
-        />
-
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {data.metrics.map((metric) => (
-            <MetricTile key={metric.label} {...metric} />
-          ))}
-        </section>
-
-        <section className="grid gap-6 lg:grid-cols-5">
-          <div className="lg:col-span-3">
-            <ThreatRadar threats={data.threats} />
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-slate-50" />
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-12 px-6 pb-20 pt-10 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="relative z-10 space-y-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.4em] text-slate-500">
+              AI Workflow Infrastructure
+            </p>
+            <h1 className="text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
+              SkynetX — Orchestrate AI Agents &amp; Swarms
+            </h1>
+            <p className="text-lg text-slate-600">
+              Design multi-step AI workflows and reduce token waste using Skynet’s
+              stability and efficiency telemetry.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="/console"
+                className="rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white"
+              >
+                Open Console
+              </a>
+              <a
+                href="#why-skynet"
+                className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700"
+              >
+                Read Overview
+              </a>
+            </div>
+            <p className="text-xs text-slate-500">
+              Built for agentic systems that need reliable orchestration, telemetry, and cost control.
+            </p>
           </div>
-          <div className="lg:col-span-2">
-            <GlobalMap nodes={data.nodes} />
-          </div>
-        </section>
 
-        <ControlPanel initialState={controlState} />
-
-        <section className="rounded-3xl border border-white/10 bg-[#050017]/80 p-6 text-sm text-slate-200">
-          <div className="flex flex-wrap items-center justify-between gap-6">
-            <div className="max-w-xl space-y-2">
-              <p className="text-xs uppercase tracking-[0.35em] text-cyan-200/80">
-                Desktop Icon
-              </p>
-              <h3 className="text-2xl font-semibold text-white">Skynet Mission Badge</h3>
-              <p>
-                Download the neon badge and pin it to your desktop/dock for one-click access to
-                Skynet Mission Control. Right-click the download button and choose “Save link as…” to
-                store the SVG, or convert it to PNG/ICO if your OS requires it.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <a
-                  href="/skynet-desktop-icon.svg"
-                  download
-                  className="rounded-full border border-cyan-300/40 bg-cyan-500/10 px-5 py-2 text-sm font-semibold text-cyan-100 hover:bg-cyan-500/20"
-                >
-                  Download SVG
-                </a>
-                <a
-                  href="/skynet-desktop-icon.svg"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-full border border-white/20 px-5 py-2 text-sm font-semibold text-white/90 hover:bg-white/10"
-                >
-                  Preview
-                </a>
+          <div className="relative z-10">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
+              <div className="mb-4 flex items-center justify-between text-xs font-semibold text-slate-500">
+                <span>Workflow Canvas</span>
+                <span className="rounded-full bg-slate-100 px-3 py-1">Live Preview</span>
+              </div>
+              <div className="grid gap-4">
+                {['Research', 'Generate', 'Review', 'Compliance', 'Publish'].map((label, index) => (
+                  <div key={label} className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700" />
+                    <div className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+                      {label}
+                    </div>
+                    {index < 4 && <div className="h-px w-6 bg-slate-300" />}
+                  </div>
+                ))}
               </div>
             </div>
-            <div className="w-40 h-40 rounded-2xl border border-white/10 bg-black/40 p-4 shadow-[0_0_35px_rgba(0,214,255,0.35)]">
-              <img
-                src="/skynet-desktop-icon.svg"
-                alt="Skynet desktop icon"
-                className="h-full w-full object-contain"
-                draggable={false}
-              />
-            </div>
+            <div className="absolute -right-8 -top-10 h-40 w-40 rounded-full bg-gradient-to-br from-indigo-200 via-blue-200 to-transparent blur-3xl" />
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section className="mb-4 rounded-3xl border border-white/10 bg-white/5 p-6 text-sm text-slate-300/90">
-          <p className="text-xs uppercase tracking-[0.35em] text-slate-400">
-            Live Telemetry Snapshot
-          </p>
-          <p className="mt-2 text-base text-white">
-            Dashboard data is now sourced directly from Skynet APIs and Supabase
-            records. This snapshot was generated at{' '}
-            {new Intl.DateTimeFormat('en-US', {
-              timeZone: 'America/Los_Angeles',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-            }).format(new Date(data.generatedAt))}
-            .
-          </p>
-        </section>
-      </main>
+      <section id="what-it-does" className="mx-auto max-w-6xl px-6 py-16">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              title: 'Workflow Orchestration',
+              text: 'Compose n8n-style workflows using AI agents and tools.',
+            },
+            {
+              title: 'Agent Swarms',
+              text: 'Run agents in parallel across complex, multi-step tasks.',
+            },
+            {
+              title: 'Token Efficiency',
+              text: 'Suppress verbosity drift and reduce token waste.',
+            },
+            {
+              title: 'Stability Telemetry',
+              text: 'Monitor context pressure, coherence, and session half-life.',
+            },
+          ].map((item) => (
+            <div key={item.title} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-3 h-8 w-8 rounded-full bg-slate-900" />
+              <h3 className="text-base font-semibold text-slate-900">{item.title}</h3>
+              <p className="mt-2 text-sm text-slate-600">{item.text}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section id="why-skynet" className="bg-slate-50">
+        <div className="mx-auto grid max-w-6xl gap-10 px-6 py-16 lg:grid-cols-[1.2fr_0.8fr]">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.4em] text-slate-500">Why Skynet</p>
+            <h2 className="mt-3 text-3xl font-semibold text-slate-900">
+              Built-In Cognitive Stability &amp; Token Control
+            </h2>
+            <ul className="mt-6 space-y-3 text-sm text-slate-700">
+              <li>Detect context pressure before failures emerge.</li>
+              <li>Suppress verbosity inflation across agent runs.</li>
+              <li>Estimate session half-life and degradation risk.</li>
+              <li>Reduce tokens consumed by long-running swarms.</li>
+            </ul>
+          </div>
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Token Usage
+            </p>
+            <div className="mt-4 space-y-4">
+              <div>
+                <p className="text-sm text-slate-500">Baseline</p>
+                <div className="mt-2 h-3 w-full rounded-full bg-slate-200">
+                  <div className="h-3 w-[78%] rounded-full bg-slate-400" />
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-slate-500">Optimized with Skynet</p>
+                <div className="mt-2 h-3 w-full rounded-full bg-slate-200">
+                  <div className="h-3 w-[46%] rounded-full bg-slate-900" />
+                </div>
+              </div>
+            </div>
+            <p className="mt-4 text-xs text-slate-500">
+              Example reduction from telemetry-driven stability control.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="how-it-works" className="mx-auto max-w-6xl px-6 py-16">
+        <h2 className="text-3xl font-semibold text-slate-900">How it works</h2>
+        <div className="mt-8 grid gap-6 md:grid-cols-3">
+          {[
+            { title: 'Build Workflows', text: 'Create multi-step pipelines with agents and tools.' },
+            { title: 'Launch Runs & Swarms', text: 'Execute workflows in parallel for speed and scale.' },
+            { title: 'Observe & Optimize', text: 'Use Skynet metrics to tune stability and token usage.' },
+          ].map((step, index) => (
+            <div key={step.title} className="rounded-2xl border border-slate-200 bg-white p-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Step {index + 1}</p>
+              <h3 className="mt-3 text-lg font-semibold text-slate-900">{step.title}</h3>
+              <p className="mt-2 text-sm text-slate-600">{step.text}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section id="who-its-for" className="bg-white">
+        <div className="mx-auto max-w-6xl px-6 py-16">
+          <h2 className="text-3xl font-semibold text-slate-900">Who it’s for</h2>
+          <div className="mt-8 grid gap-6 md:grid-cols-3">
+            {[
+              {
+                title: 'Developers',
+                text: 'Ship reliable agent workflows with telemetry-backed controls.',
+              },
+              {
+                title: 'Growth & Automation Teams',
+                text: 'Scale content, outreach, and ops with measurable stability.',
+              },
+              {
+                title: 'AI-Native Startups',
+                text: 'Run agent swarms with predictable cost and performance.',
+              },
+            ].map((persona) => (
+              <div key={persona.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+                <h3 className="text-lg font-semibold text-slate-900">{persona.title}</h3>
+                <p className="mt-2 text-sm text-slate-600">{persona.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <footer className="border-t border-slate-200">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-8 text-xs text-slate-500">
+          <span>SkynetX</span>
+          <a href="/console" className="font-semibold text-slate-700">Open Console</a>
+        </div>
+      </footer>
     </div>
   );
 }

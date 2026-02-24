@@ -18,13 +18,33 @@ export async function GET() {
   });
 }
 
+type ControlBody = { action?: string; payload?: Record<string, unknown> };
+
+async function parseBody(request: Request): Promise<ControlBody> {
+  try {
+    return (await request.json()) as ControlBody;
+  } catch {
+    const raw = await request.text();
+    if (!raw) return {};
+    try {
+      return JSON.parse(raw) as ControlBody;
+    } catch {
+      throw new Error('Invalid JSON body');
+    }
+  }
+}
+
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { action, payload } = body as {
-      action: string;
-      payload?: Record<string, unknown>;
-    };
+    const body = await parseBody(request);
+    const { action, payload } = body;
+
+    if (!action) {
+      return NextResponse.json(
+        { error: 'invalid_body', message: 'Missing action' },
+        { status: 400 },
+      );
+    }
 
     let state;
 
@@ -63,7 +83,7 @@ export async function POST(request: Request) {
         );
     }
 
-    revalidatePath('/');
+    revalidatePath('/console');
     return NextResponse.json(state);
   } catch (error) {
     console.error('Control API error', error);
