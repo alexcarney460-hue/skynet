@@ -47,6 +47,47 @@ export default async function Home() {
 
         <ControlPanel initialState={controlState} />
 
+        <section className="rounded-3xl border border-white/10 bg-[#050017]/80 p-6 text-sm text-slate-200">
+          <div className="flex flex-wrap items-center justify-between gap-6">
+            <div className="max-w-xl space-y-2">
+              <p className="text-xs uppercase tracking-[0.35em] text-cyan-200/80">
+                Desktop Icon
+              </p>
+              <h3 className="text-2xl font-semibold text-white">Skynet Mission Badge</h3>
+              <p>
+                Download the neon badge and pin it to your desktop/dock for one-click access to
+                Skynet Mission Control. Right-click the download button and choose “Save link as…” to
+                store the SVG, or convert it to PNG/ICO if your OS requires it.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <a
+                  href="/skynet-desktop-icon.svg"
+                  download
+                  className="rounded-full border border-cyan-300/40 bg-cyan-500/10 px-5 py-2 text-sm font-semibold text-cyan-100 hover:bg-cyan-500/20"
+                >
+                  Download SVG
+                </a>
+                <a
+                  href="/skynet-desktop-icon.svg"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-full border border-white/20 px-5 py-2 text-sm font-semibold text-white/90 hover:bg-white/10"
+                >
+                  Preview
+                </a>
+              </div>
+            </div>
+            <div className="w-40 h-40 rounded-2xl border border-white/10 bg-black/40 p-4 shadow-[0_0_35px_rgba(0,214,255,0.35)]">
+              <img
+                src="/skynet-desktop-icon.svg"
+                alt="Skynet desktop icon"
+                className="h-full w-full object-contain"
+                draggable={false}
+              />
+            </div>
+          </div>
+        </section>
+
         <section className="mb-4 rounded-3xl border border-white/10 bg-white/5 p-6 text-sm text-slate-300/90">
           <p className="text-xs uppercase tracking-[0.35em] text-slate-400">
             Live Telemetry Snapshot

@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Skynet - Agent Registry",
   description: "Canonical Registry of Performance-Optimized Agent Systems",
+  icons: {
+    icon: "/skynet-desktop-icon.svg",
+    shortcut: "/skynet-desktop-icon.svg",
+    apple: "/skynet-desktop-icon.svg",
+  },
 };
 
 export default function RootLayout({

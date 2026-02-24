@@ -1,0 +1,36 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Skynet desktop icon">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#6ff6ff" stop-opacity="0.95" />
+      <stop offset="45%" stop-color="#4b11a8" stop-opacity="0.85" />
+      <stop offset="100%" stop-color="#07001a" />
+    </radialGradient>
+    <linearGradient id="ring" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff4fd8" />
+      <stop offset="50%" stop-color="#7f5bff" />
+      <stop offset="100%" stop-color="#0ffffa" />
+    </linearGradient>
+    <linearGradient id="glyph" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#c2f7ff" />
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="12" result="coloredBlur" />
+      <feMerge>
+        <feMergeNode in="coloredBlur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="120" fill="#050012" />
+  <circle cx="256" cy="256" r="220" fill="url(#bg)" />
+  <circle cx="256" cy="256" r="190" fill="none" stroke="url(#ring)" stroke-width="10" opacity="0.9" />
+  <circle cx="256" cy="256" r="150" fill="none" stroke="url(#ring)" stroke-width="4" opacity="0.35" />
+
+  <path d="M150 270c0-70 45-120 106-120 52 0 94 38 94 84 0 43-32 70-79 70h-50c-9 0-16 7-16 16s7 16 16 16h122c17 0 30 13 30 30s-13 30-30 30H190c-40 0-72-32-72-72 0-37 26-67 60-74-18-7-28-21-28-40z" fill="url(#glyph)" filter="url(#glow)" opacity="0.95" />
+
+  <circle cx="370" cy="160" r="26" fill="#0ffffa" opacity="0.9" />
+  <circle cx="150" cy="360" r="18" fill="#ff4fd8" opacity="0.8" />
+  <circle cx="360" cy="360" r="12" fill="#ffffff" opacity="0.7" />
+</svg>

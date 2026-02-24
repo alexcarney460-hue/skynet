@@ -10,7 +10,8 @@ import type {
   WorkflowTemplate,
 } from './control-types';
 
-const STATE_PATH = path.join(process.cwd(), 'logs', 'control-state.json');
+const DATA_ROOT = process.env.VERCEL ? path.join('/tmp', 'skynet-control') : path.join(process.cwd(), 'logs');
+const STATE_PATH = path.join(DATA_ROOT, 'control-state.json');
 
 const DEFAULT_STATE: ControlState = {
   agents: [
