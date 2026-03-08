@@ -3,57 +3,92 @@ import Link from "next/link";
 const features = [
   {
     title: "Drift Detection",
-    text: "Composite drift scoring from memory pressure, token burn rate, and context divergence. Flags OPTIMAL through CRITICAL in real time.",
+    desc: "Composite drift scoring from memory pressure, token burn, and context divergence.",
+    endpoint: "/api/v1/drift",
+    accent: "from-rose-500 to-orange-500",
+    glow: "rgba(255,80,120,0.4)",
+    status: "OPTIMAL",
+    statusColor: "text-emerald-400",
   },
   {
     title: "Context Pressure",
-    text: "Measures memory saturation, context window usage, and token budget depletion to surface actionable compression signals.",
+    desc: "Memory saturation, context window usage, and token budget depletion signals.",
+    endpoint: "/api/v1/pressure",
+    accent: "from-cyan-400 to-blue-500",
+    glow: "rgba(0,214,255,0.4)",
+    status: "LOW",
+    statusColor: "text-cyan-400",
   },
   {
     title: "Verbosity Control",
-    text: "Tracks output length drift against baselines and suppresses token inflation before it compounds across agent turns.",
+    desc: "Output length drift tracking against baselines. Suppresses token inflation.",
+    endpoint: "/api/v1/verbosity",
+    accent: "from-violet-500 to-fuchsia-500",
+    glow: "rgba(168,85,247,0.4)",
+    status: "OPTIMAL",
+    statusColor: "text-emerald-400",
   },
   {
     title: "Session Half-Life",
-    text: "Estimates remaining useful session time from decay rates, burn velocity, and error frequency. STABLE, DECAYING, or FRAGILE.",
+    desc: "Remaining session time from decay rates, burn velocity, and error frequency.",
+    endpoint: "/api/v1/half-life",
+    accent: "from-amber-400 to-red-500",
+    glow: "rgba(251,191,36,0.4)",
+    status: "STABLE",
+    statusColor: "text-amber-400",
   },
 ];
 
-const steps = [
-  {
-    title: "Get API Key",
-    text: "Register your agent and receive a key scoped to your telemetry namespace.",
-  },
-  {
-    title: "Instrument Your Agent",
-    text: "POST session metrics to /api/v1/drift, /pressure, /verbosity, or /half-life. Each returns deterministic stability signals.",
-  },
-  {
-    title: "View Dashboard",
-    text: "Open the console to see real-time metric tiles, drift radar, and telemetry feed for all instrumented agents.",
-  },
-];
+const codeSnippet = `curl -X POST https://skynetx.vercel.app/api/v1/drift \\
+  -H "Authorization: Bearer sk_your_key" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "memoryUsedPercent": 72,
+    "tokenBurnRate": 45,
+    "contextDriftPercent": 31,
+    "sessionAgeMinutes": 48
+  }'`;
+
+const responseSnippet = `{
+  "timestamp": "2026-03-07T18:42:01.337Z",
+  "score": 0.581,
+  "status": "AT_RISK",
+  "recommendations": [
+    "High drift detected; monitor closely",
+    "Consider reducing output verbosity"
+  ]
+}`;
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
+    <div className="min-h-screen bg-[#030011] text-slate-100 overflow-hidden">
+      {/* Background effects */}
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,40,200,0.25),transparent),radial-gradient(ellipse_60%_40%_at_80%_60%,rgba(0,214,255,0.12),transparent)]" />
+      <div className="pointer-events-none fixed inset-0 opacity-30 mix-blend-screen">
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(180deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:80px_80px]" />
+      </div>
+
+      {/* Nav */}
+      <header className="relative z-20 mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-6">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 dark:from-cyan-400 dark:to-fuchsia-500" />
-          <span className="text-sm font-semibold tracking-[0.3em] text-slate-700 dark:text-slate-300">
+          <div className="relative h-9 w-9">
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-cyan-400 to-fuchsia-500 blur-sm opacity-60" />
+            <div className="relative h-full w-full rounded-xl bg-gradient-to-br from-cyan-400 to-fuchsia-500" />
+          </div>
+          <span className="text-sm font-bold tracking-[0.35em] text-white">
             SKYNETX
           </span>
         </div>
-        <nav className="flex items-center gap-6 text-sm text-slate-600 dark:text-slate-400">
-          <a href="#features" className="hover:text-slate-900 dark:hover:text-white">
-            Features
+        <nav className="flex items-center gap-6">
+          <a href="#metrics" className="text-sm text-slate-400 transition hover:text-white">
+            Metrics
           </a>
-          <a href="#how-it-works" className="hover:text-slate-900 dark:hover:text-white">
-            How it works
+          <a href="#api" className="text-sm text-slate-400 transition hover:text-white">
+            API
           </a>
           <Link
             href="/console"
-            className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white dark:bg-white dark:text-slate-900"
+            className="rounded-full bg-gradient-to-r from-cyan-500 to-fuchsia-500 px-5 py-2 text-sm font-semibold text-white transition hover:shadow-[0_0_25px_rgba(0,214,255,0.4)]"
           >
             Open Console
           </Link>
@@ -61,108 +96,209 @@ export default function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-slate-50 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900" />
-        <div className="relative z-10 mx-auto max-w-6xl px-6 pb-20 pt-16 text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-slate-500 dark:text-slate-400">
-            Cognitive Telemetry Platform
-          </p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-            SkynetX &mdash; Cognitive Telemetry for AI Agents
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-600 dark:text-slate-400">
-            Deterministic stability signals for agents operating under resource
-            constraints.
-          </p>
-          <div className="mt-8 flex justify-center gap-3">
-            <Link
-              href="/console"
-              className="rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white dark:bg-white dark:text-slate-900"
-            >
-              Open Console
-            </Link>
-            <a
-              href="#features"
-              className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-300"
-            >
-              Learn More
-            </a>
+      <section className="relative z-10 mx-auto max-w-7xl px-6 pb-24 pt-20 text-center">
+        <div className="inline-block rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.5em] text-cyan-300/80 backdrop-blur-sm">
+          Cognitive Telemetry Platform
+        </div>
+
+        <h1 className="mx-auto mt-8 max-w-4xl text-5xl font-bold leading-[1.1] tracking-tight sm:text-6xl lg:text-7xl">
+          <span className="bg-gradient-to-r from-white via-white to-slate-400 bg-clip-text text-transparent">
+            Stability signals for
+          </span>
+          <br />
+          <span className="bg-gradient-to-r from-cyan-300 via-fuchsia-400 to-amber-300 bg-clip-text text-transparent">
+            autonomous agents
+          </span>
+        </h1>
+
+        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-400 leading-relaxed">
+          Four deterministic APIs that tell your agents when they&apos;re drifting,
+          burning tokens, or running out of session runway. No guesswork.
+        </p>
+
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+          <Link
+            href="/console"
+            className="group relative rounded-full px-8 py-3.5 text-sm font-semibold text-white transition"
+          >
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-500 to-fuchsia-500" />
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-500 to-fuchsia-500 opacity-0 blur-lg transition group-hover:opacity-60" />
+            <span className="relative">Open Console</span>
+          </Link>
+          <a
+            href="#api"
+            className="rounded-full border border-white/15 bg-white/5 px-8 py-3.5 text-sm font-semibold text-slate-300 backdrop-blur-sm transition hover:border-white/30 hover:text-white"
+          >
+            View API
+          </a>
+        </div>
+
+        {/* Live status bar */}
+        <div className="mx-auto mt-16 flex max-w-xl items-center justify-center gap-8 rounded-2xl border border-white/10 bg-white/[0.03] px-8 py-4 backdrop-blur-xl">
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+              All systems online
+            </span>
           </div>
-          <p className="mt-4 text-xs text-slate-500 dark:text-slate-500">
-            Four deterministic APIs. Zero guesswork. Built for agentic systems
-            that need reliable telemetry and cost control.
-          </p>
+          <div className="h-4 w-px bg-white/10" />
+          <span className="text-xs text-slate-500">4 endpoints</span>
+          <div className="h-4 w-px bg-white/10" />
+          <span className="text-xs text-slate-500">&lt;50ms p95</span>
         </div>
       </section>
 
-      {/* Feature Cards */}
-      <section id="features" className="mx-auto max-w-6xl px-6 py-16">
-        <h2 className="text-center text-3xl font-semibold">Core Metrics</h2>
-        <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {features.map((item) => (
+      {/* Metric Cards */}
+      <section id="metrics" className="relative z-10 mx-auto max-w-7xl px-6 pb-24">
+        <div className="text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.5em] text-fuchsia-300/70">
+            Core Metrics
+          </p>
+          <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl">
+            Four layers of cognitive telemetry
+          </h2>
+        </div>
+
+        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {features.map((f) => (
             <div
-              key={item.title}
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+              key={f.title}
+              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-xl transition hover:border-white/20"
+              style={{ boxShadow: `0 0 40px ${f.glow.replace("0.4", "0.08")}` }}
             >
-              <div className="mb-3 h-8 w-8 rounded-full bg-slate-900 dark:bg-gradient-to-br dark:from-cyan-400 dark:to-fuchsia-500" />
-              <h3 className="text-base font-semibold">{item.title}</h3>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                {item.text}
-              </p>
+              <div
+                className="pointer-events-none absolute -top-20 -right-20 h-40 w-40 rounded-full opacity-20 blur-3xl transition group-hover:opacity-40"
+                style={{ background: `radial-gradient(circle, ${f.glow}, transparent)` }}
+              />
+              <div className="relative">
+                <div className={`mb-4 inline-block rounded-lg bg-gradient-to-r ${f.accent} p-0.5`}>
+                  <div className="rounded-[5px] bg-[#0a0020] px-3 py-1">
+                    <span className={`text-[0.6rem] font-bold uppercase tracking-[0.4em] ${f.statusColor}`}>
+                      {f.status}
+                    </span>
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-white">{f.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-400">
+                  {f.desc}
+                </p>
+                <code className="mt-4 block text-[0.65rem] text-slate-500 font-mono">
+                  {f.endpoint}
+                </code>
+              </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* How It Works */}
-      <section
-        id="how-it-works"
-        className="bg-slate-50 dark:bg-slate-900/50"
-      >
-        <div className="mx-auto max-w-6xl px-6 py-16">
-          <h2 className="text-3xl font-semibold">How it works</h2>
-          <div className="mt-8 grid gap-6 md:grid-cols-3">
-            {steps.map((step, index) => (
-              <div
-                key={step.title}
-                className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
-                  Step {index + 1}
-                </p>
-                <h3 className="mt-3 text-lg font-semibold">{step.title}</h3>
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                  {step.text}
-                </p>
+      {/* API Preview */}
+      <section id="api" className="relative z-10 mx-auto max-w-7xl px-6 pb-24">
+        <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.02]">
+          <div className="grid lg:grid-cols-2">
+            {/* Request */}
+            <div className="border-b border-white/10 p-8 lg:border-b-0 lg:border-r">
+              <div className="mb-4 flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-rose-500/80" />
+                <div className="h-3 w-3 rounded-full bg-amber-500/80" />
+                <div className="h-3 w-3 rounded-full bg-emerald-500/80" />
+                <span className="ml-3 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  Request
+                </span>
               </div>
-            ))}
+              <pre className="overflow-x-auto text-[0.8rem] leading-relaxed">
+                <code className="text-cyan-300/90">{codeSnippet}</code>
+              </pre>
+            </div>
+            {/* Response */}
+            <div className="p-8">
+              <div className="mb-4 flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+                <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  Response &middot; 200
+                </span>
+              </div>
+              <pre className="overflow-x-auto text-[0.8rem] leading-relaxed">
+                <code className="text-fuchsia-300/80">{responseSnippet}</code>
+              </pre>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="mx-auto max-w-6xl px-6 py-16 text-center">
-        <h2 className="text-3xl font-semibold">
-          Ready to instrument your agents?
-        </h2>
-        <p className="mx-auto mt-4 max-w-xl text-sm text-slate-600 dark:text-slate-400">
-          Open the console to test metric APIs interactively, view telemetry
-          feeds, and monitor drift in real time.
-        </p>
-        <Link
-          href="/console"
-          className="mt-6 inline-block rounded-full bg-slate-900 px-8 py-3 text-sm font-semibold text-white dark:bg-white dark:text-slate-900"
-        >
-          Open Console
-        </Link>
+      {/* How it works */}
+      <section className="relative z-10 mx-auto max-w-7xl px-6 pb-24">
+        <div className="text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.5em] text-cyan-300/70">
+            Integration
+          </p>
+          <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl">
+            Three steps to cognitive telemetry
+          </h2>
+        </div>
+
+        <div className="mt-12 grid gap-6 md:grid-cols-3">
+          {[
+            {
+              step: "01",
+              title: "Get an API key",
+              desc: "Register and receive a key scoped to your telemetry namespace. Keys are hashed and stored — never logged in plaintext.",
+            },
+            {
+              step: "02",
+              title: "Instrument your agent",
+              desc: "POST session metrics to any of the four endpoints. Each returns deterministic stability signals your agent can act on.",
+            },
+            {
+              step: "03",
+              title: "Monitor in real time",
+              desc: "Open the console to see metric tiles, drift radar, and a live telemetry feed across all instrumented agents.",
+            },
+          ].map((s) => (
+            <div
+              key={s.step}
+              className="relative rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur-xl"
+            >
+              <span className="text-5xl font-black text-white/[0.04]">{s.step}</span>
+              <h3 className="mt-2 text-lg font-semibold text-white">{s.title}</h3>
+              <p className="mt-3 text-sm leading-relaxed text-slate-400">{s.desc}</p>
+            </div>
+          ))}
+        </div>
       </section>
 
-      <footer className="border-t border-slate-200 dark:border-slate-800">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-8 text-xs text-slate-500">
-          <span>SkynetX</span>
-          <Link href="/console" className="font-semibold text-slate-700 dark:text-slate-300">
-            Open Console
+      {/* CTA */}
+      <section className="relative z-10 mx-auto max-w-7xl px-6 pb-24 text-center">
+        <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] px-8 py-16 backdrop-blur-xl">
+          <h2 className="text-3xl font-bold text-white sm:text-4xl">
+            Ready to instrument your agents?
+          </h2>
+          <p className="mx-auto mt-4 max-w-lg text-slate-400">
+            Open the console to test metric APIs interactively, view telemetry
+            feeds, and monitor drift in real time.
+          </p>
+          <Link
+            href="/console"
+            className="group relative mt-8 inline-block rounded-full px-10 py-4 text-sm font-semibold text-white"
+          >
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-500 to-fuchsia-500" />
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-500 to-fuchsia-500 opacity-0 blur-xl transition group-hover:opacity-50" />
+            <span className="relative">Open Console</span>
           </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="relative z-10 border-t border-white/10">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-8">
+          <span className="text-xs font-semibold tracking-[0.3em] text-slate-500">
+            SKYNETX
+          </span>
+          <div className="flex items-center gap-6 text-xs text-slate-500">
+            <Link href="/console" className="transition hover:text-white">
+              Console
+            </Link>
+            <span>&copy; {new Date().getFullYear()}</span>
+          </div>
         </div>
       </footer>
     </div>
