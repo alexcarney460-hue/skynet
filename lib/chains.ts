@@ -1,6 +1,6 @@
-import { mainnet, base, polygon, arbitrum } from 'wagmi/chains';
+import { mainnet, base, polygon, arbitrum, bsc } from 'wagmi/chains';
 
-export const SUPPORTED_CHAINS = [mainnet, base, polygon, arbitrum] as const;
+export const SUPPORTED_CHAINS = [mainnet, base, polygon, arbitrum, bsc] as const;
 
 // USDC contract addresses per chain
 export const USDC_ADDRESSES: Record<number, `0x${string}`> = {
@@ -8,6 +8,7 @@ export const USDC_ADDRESSES: Record<number, `0x${string}`> = {
   [base.id]:     '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
   [polygon.id]:  '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
   [arbitrum.id]: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+  [bsc.id]:      '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
 };
 
 // USDT contract addresses per chain
@@ -16,6 +17,7 @@ export const USDT_ADDRESSES: Record<number, `0x${string}`> = {
   [base.id]:     '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2',
   [polygon.id]:  '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
   [arbitrum.id]: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
+  [bsc.id]:      '0x55d398326f99059fF775485246999027B3197955',
 };
 
 // ERC-20 transfer ABI (same for USDC and USDT)

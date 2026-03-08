@@ -4,7 +4,7 @@ import { createServiceClient } from '@/lib/supabase';
 import { CREDIT_PACKS, PackId } from '@/lib/plans';
 
 // Wallet address for receiving payments
-const RECEIVING_WALLET = process.env.CRYPTO_WALLET_ADDRESS || '';
+const RECEIVING_WALLET = process.env.CRYPTO_WALLET_ADDRESS || '0x34278CCD5a1E781E586f9b49D92D3D893860Dd09';
 
 // POST /api/v1/purchase — initiate a credit purchase
 export async function POST(request: NextRequest) {
