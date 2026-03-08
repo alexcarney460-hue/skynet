@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import { useApiKey } from './ApiKeyProvider';
 
+type Mode = 'idle' | 'signup' | 'login';
+
 export function ApiKeyBar() {
   const { apiKey, setApiKey } = useApiKey();
   const [input, setInput] = useState('');
-  const [showSignup, setShowSignup] = useState(false);
+  const [mode, setMode] = useState<Mode>('idle');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState<string | null>(null);
@@ -25,12 +27,12 @@ export function ApiKeyBar() {
     setMessage(null);
   }
 
-  async function handleAuth(mode: 'signup' | 'login') {
+  async function handleSignup() {
     if (!email || !password) return;
     setLoading(true);
     setMessage(null);
     try {
-      const res = await fetch(`/api/auth/${mode}`, {
+      const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -40,11 +42,37 @@ export function ApiKeyBar() {
         setMessage(data.error);
       } else if (data.api_key) {
         setApiKey(data.api_key);
-        setMessage(`Key created: ${data.api_key.slice(0, 20)}... — saved to console.`);
-        setShowSignup(false);
+        setMessage(`Account created! Key saved to console.`);
+        setMode('idle');
+      }
+    } catch (err) {
+      setMessage(String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleLogin(regenerate: boolean) {
+    if (!email || !password) return;
+    setLoading(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, regenerate_key: regenerate }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setMessage(data.error);
+      } else if (data.api_key) {
+        // Got a new key from regeneration
+        setApiKey(data.api_key);
+        setMessage('New key generated and saved! Previous keys revoked.');
+        setMode('idle');
       } else {
-        setMessage('Logged in. Enter your API key to continue.');
-        setShowSignup(false);
+        // Logged in but no raw key available
+        setMessage(data.message || 'Logged in. Click "Generate New Key" if you lost yours.');
       }
     } catch (err) {
       setMessage(String(err));
@@ -72,6 +100,7 @@ export function ApiKeyBar() {
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+      {/* Paste existing key */}
       <div className="flex gap-2">
         <input
           type="text"
@@ -87,15 +116,34 @@ export function ApiKeyBar() {
         >
           Connect
         </button>
+      </div>
+
+      {/* Mode selector */}
+      <div className="mt-3 flex gap-2">
         <button
-          onClick={() => setShowSignup(!showSignup)}
-          className="rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-slate-300 hover:text-white"
+          onClick={() => setMode(mode === 'signup' ? 'idle' : 'signup')}
+          className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition ${
+            mode === 'signup'
+              ? 'border-cyan-400/40 bg-cyan-500/10 text-cyan-200'
+              : 'border-white/15 text-slate-400 hover:text-white'
+          }`}
         >
-          {showSignup ? 'Cancel' : 'Sign Up'}
+          New Account
+        </button>
+        <button
+          onClick={() => setMode(mode === 'login' ? 'idle' : 'login')}
+          className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition ${
+            mode === 'login'
+              ? 'border-cyan-400/40 bg-cyan-500/10 text-cyan-200'
+              : 'border-white/15 text-slate-400 hover:text-white'
+          }`}
+        >
+          Lost Key? Login
         </button>
       </div>
 
-      {showSignup && (
+      {/* Signup form */}
+      {mode === 'signup' && (
         <div className="mt-4 flex gap-2">
           <input
             type="email"
@@ -109,20 +157,56 @@ export function ApiKeyBar() {
             placeholder="password (6+ chars)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSignup()}
             className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400/50"
           />
           <button
-            onClick={() => handleAuth('signup')}
+            onClick={handleSignup}
             disabled={loading}
             className="rounded-full bg-emerald-500/20 border border-emerald-400/40 px-4 py-2 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/30 disabled:opacity-50"
           >
-            {loading ? '...' : 'Create Account'}
+            {loading ? '...' : 'Create'}
           </button>
         </div>
       )}
 
+      {/* Login + regenerate form */}
+      {mode === 'login' && (
+        <div className="mt-4 space-y-3">
+          <div className="flex gap-2">
+            <input
+              type="email"
+              placeholder="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400/50"
+            />
+            <input
+              type="password"
+              placeholder="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleLogin(true)}
+              className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400/50"
+            />
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleLogin(true)}
+              disabled={loading}
+              className="rounded-full bg-gradient-to-r from-cyan-500 to-fuchsia-500 px-5 py-2 text-xs font-semibold text-white disabled:opacity-50"
+            >
+              {loading ? '...' : 'Generate New Key'}
+            </button>
+            <p className="flex items-center text-[0.65rem] text-slate-500">
+              This will revoke your old key and create a new one.
+            </p>
+          </div>
+        </div>
+      )}
+
       {message && (
-        <p className={`mt-3 text-xs ${message.includes('error') || message.includes('Error') ? 'text-rose-400' : 'text-emerald-400'}`}>
+        <p className={`mt-3 text-xs ${message.includes('error') || message.includes('Error') || message.includes('Invalid') ? 'text-rose-400' : 'text-emerald-400'}`}>
           {message}
         </p>
       )}
