@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useApiKey } from './ApiKeyProvider';
 
 interface TelemetryEvent {
   id: string;
@@ -13,9 +14,9 @@ interface TelemetryEvent {
 }
 
 export function TelemetryFeed() {
+  const { apiKey } = useApiKey();
   const [events, setEvents] = useState<TelemetryEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [apiKey, setApiKey] = useState('');
   const [loaded, setLoaded] = useState(false);
 
   async function fetchEvents() {
@@ -38,28 +39,29 @@ export function TelemetryFeed() {
   }
 
   useEffect(() => {
-    if (!apiKey) return;
+    if (!apiKey) { setEvents([]); setLoaded(false); return; }
     fetchEvents();
     const interval = setInterval(fetchEvents, 15000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiKey]);
 
+  if (!apiKey) {
+    return (
+      <div className="rounded-3xl border border-white/10 bg-[#050017]/80 p-6 backdrop-blur-xl">
+        <p className="text-xs uppercase tracking-[0.35em] text-fuchsia-200/80">Telemetry Feed</p>
+        <p className="mt-4 text-sm text-slate-400">Set your API key above to view telemetry.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-3xl border border-white/10 bg-[#050017]/80 p-6 backdrop-blur-xl">
-      <p className="text-xs uppercase tracking-[0.35em] text-fuchsia-200/80">Telemetry Feed</p>
-
-      <div className="mt-4 flex gap-2">
-        <input
-          type="text"
-          placeholder="sk_... (API key)"
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-fuchsia-400/50"
-        />
+      <div className="flex items-center justify-between">
+        <p className="text-xs uppercase tracking-[0.35em] text-fuchsia-200/80">Telemetry Feed</p>
         <button
           onClick={fetchEvents}
-          className="rounded-full border border-fuchsia-400/40 bg-fuchsia-500/10 px-4 py-2 text-xs font-semibold text-fuchsia-100 hover:bg-fuchsia-500/20"
+          className="rounded-full border border-fuchsia-400/40 bg-fuchsia-500/10 px-4 py-1.5 text-xs font-semibold text-fuchsia-100 hover:bg-fuchsia-500/20"
         >
           Refresh
         </button>
@@ -68,7 +70,7 @@ export function TelemetryFeed() {
       {error && <p className="mt-3 text-sm text-rose-400">{error}</p>}
 
       {loaded && events.length === 0 && (
-        <p className="mt-4 text-sm text-slate-400">No telemetry events found.</p>
+        <p className="mt-4 text-sm text-slate-400">No telemetry events yet. Run a metric evaluation above.</p>
       )}
 
       {events.length > 0 && (

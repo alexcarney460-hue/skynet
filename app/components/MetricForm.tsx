@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useApiKey } from './ApiKeyProvider';
 
 const TABS = ['drift', 'pressure', 'verbosity', 'half-life'] as const;
 type Tab = (typeof TABS)[number];
@@ -13,6 +14,7 @@ const DEFAULTS: Record<Tab, Record<string, string>> = {
 };
 
 export function MetricForm() {
+  const { apiKey } = useApiKey();
   const [tab, setTab] = useState<Tab>('drift');
   const [fields, setFields] = useState<Record<string, string>>(DEFAULTS.drift);
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
@@ -25,10 +27,25 @@ export function MetricForm() {
   }
 
   async function submit() {
+    if (!apiKey) {
+      setResult({ error: 'Set your API key above first' });
+      return;
+    }
     setLoading(true);
     try {
-      const params = new URLSearchParams(fields);
-      const res = await fetch(`/api/v1/${tab}?${params}`);
+      const body: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(fields)) {
+        if (v.includes(',')) body[k] = v.split(',').map(Number);
+        else body[k] = Number(v);
+      }
+      const res = await fetch(`/api/v1/${tab}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(body),
+      });
       const data = await res.json();
       setResult(data);
     } catch (err) {
@@ -48,9 +65,7 @@ export function MetricForm() {
             key={t}
             onClick={() => switchTab(t)}
             className={`rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-wider transition ${
-              tab === t
-                ? 'bg-white/10 text-white'
-                : 'text-slate-400 hover:text-white'
+              tab === t ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'
             }`}
           >
             {t}
