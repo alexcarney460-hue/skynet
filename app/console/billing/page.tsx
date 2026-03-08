@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { CREDIT_PACKS, PackId } from '@/lib/plans';
+import PayWithWallet from '@/app/components/PayWithWallet';
 
 interface Payment {
   id: string;
@@ -20,22 +22,20 @@ interface UsageData {
   payments: Payment[];
 }
 
-interface PurchaseResponse {
-  payment_id: string;
-  wallet: string;
-  amount_usd: number;
+interface PurchaseState {
+  paymentId: string;
+  packId: PackId;
+  amountUsd: number;
   credits: number;
-  instructions: string;
+  wallet: string;
 }
 
 export default function BillingPage() {
   const [data, setData] = useState<UsageData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState('');
-  const [purchase, setPurchase] = useState<PurchaseResponse | null>(null);
-  const [txHash, setTxHash] = useState('');
-  const [confirming, setConfirming] = useState(false);
-  const [confirmMsg, setConfirmMsg] = useState<string | null>(null);
+  const [purchase, setPurchase] = useState<PurchaseState | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem('skynetx_api_key');
@@ -60,7 +60,8 @@ export default function BillingPage() {
 
   async function initPurchase(pack: PackId) {
     setPurchase(null);
-    setConfirmMsg(null);
+    setSuccessMsg(null);
+    setError(null);
     try {
       const res = await fetch('/api/v1/purchase', {
         method: 'POST',
@@ -69,34 +70,22 @@ export default function BillingPage() {
       });
       const d = await res.json();
       if (d.error) setError(d.error);
-      else setPurchase(d);
+      else setPurchase({
+        paymentId: d.payment_id,
+        packId: pack,
+        amountUsd: d.amount_usd,
+        credits: d.credits,
+        wallet: d.wallet,
+      });
     } catch (err) {
       setError(String(err));
     }
   }
 
-  async function confirmPayment() {
-    if (!purchase || !txHash) return;
-    setConfirming(true);
-    try {
-      const res = await fetch('/api/v1/purchase/confirm', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payment_id: purchase.payment_id, tx_hash: txHash }),
-      });
-      const d = await res.json();
-      if (d.error) setConfirmMsg(d.error);
-      else {
-        setConfirmMsg(`+${d.credits_added.toLocaleString()} credits added! New balance: ${d.new_balance.toLocaleString()}`);
-        setPurchase(null);
-        setTxHash('');
-        fetchUsage(apiKey);
-      }
-    } catch (err) {
-      setConfirmMsg(String(err));
-    } finally {
-      setConfirming(false);
-    }
+  function handlePaymentSuccess(creditsAdded: number, newBalance: number) {
+    setSuccessMsg(`+${creditsAdded.toLocaleString()} credits added! New balance: ${newBalance.toLocaleString()}`);
+    setPurchase(null);
+    fetchUsage(apiKey);
   }
 
   return (
@@ -109,9 +98,12 @@ export default function BillingPage() {
             <p className="text-xs uppercase tracking-[0.4em] text-cyan-200/80">SkynetX</p>
             <h1 className="text-2xl font-semibold text-white">Credits & Billing</h1>
           </div>
-          <Link href="/console" className="text-xs text-slate-500 hover:text-white transition">
-            Back to Console
-          </Link>
+          <div className="flex items-center gap-4">
+            <ConnectButton showBalance={false} chainStatus="icon" accountStatus="address" />
+            <Link href="/console" className="text-xs text-slate-500 hover:text-white transition">
+              Back to Console
+            </Link>
+          </div>
         </header>
 
         {!apiKey && (
@@ -122,6 +114,7 @@ export default function BillingPage() {
         )}
 
         {error && <p className="text-sm text-rose-400">{error}</p>}
+        {successMsg && <p className="text-sm text-emerald-400">{successMsg}</p>}
 
         {data && (
           <>
@@ -145,7 +138,7 @@ export default function BillingPage() {
             {/* Buy Credits */}
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
               <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Buy Credits</p>
-              <p className="mt-1 text-xs text-slate-600">Pay with USDC, USDT, or SOL</p>
+              <p className="mt-1 text-xs text-slate-600">Pay with USDC or USDT on Ethereum, Base, Polygon, or Arbitrum</p>
 
               <div className="mt-4 grid gap-4 sm:grid-cols-3">
                 {(Object.entries(CREDIT_PACKS) as [PackId, typeof CREDIT_PACKS[PackId]][]).map(([id, pack]) => (
@@ -165,39 +158,18 @@ export default function BillingPage() {
               </div>
             </div>
 
-            {/* Payment flow */}
+            {/* Wallet Payment Flow */}
             {purchase && (
-              <div className="rounded-2xl border border-cyan-400/30 bg-cyan-500/5 p-6">
-                <p className="text-xs uppercase tracking-[0.35em] text-cyan-300">Payment Instructions</p>
-                <p className="mt-2 text-sm text-slate-300">
-                  Send <span className="font-bold text-white">${purchase.amount_usd}</span> in USDC/USDT/SOL to:
-                </p>
-                <code className="mt-2 block rounded-lg border border-white/10 bg-black/40 px-4 py-3 text-sm text-cyan-300 break-all">
-                  {purchase.wallet || 'Wallet not configured — contact support'}
-                </code>
-                <p className="mt-3 text-sm text-slate-300">After sending, paste your transaction hash:</p>
-                <div className="mt-2 flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Transaction hash..."
-                    value={txHash}
-                    onChange={(e) => setTxHash(e.target.value)}
-                    className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400/50"
-                  />
-                  <button
-                    onClick={confirmPayment}
-                    disabled={confirming || !txHash}
-                    className="rounded-full bg-emerald-500/20 border border-emerald-400/40 px-5 py-2 text-xs font-semibold text-emerald-200 disabled:opacity-50"
-                  >
-                    {confirming ? 'Confirming...' : 'Confirm Payment'}
-                  </button>
-                </div>
-                {confirmMsg && (
-                  <p className={`mt-3 text-sm ${confirmMsg.includes('added') ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {confirmMsg}
-                  </p>
-                )}
-              </div>
+              <PayWithWallet
+                packId={purchase.packId}
+                amountUsd={purchase.amountUsd}
+                credits={purchase.credits}
+                paymentId={purchase.paymentId}
+                receivingWallet={purchase.wallet}
+                apiKey={apiKey}
+                onSuccess={handlePaymentSuccess}
+                onCancel={() => setPurchase(null)}
+              />
             )}
 
             {/* Payment History */}
