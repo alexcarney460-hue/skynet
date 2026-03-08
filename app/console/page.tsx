@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { MetricTile } from '../components/MetricTile';
 import { ThreatRadar } from '../components/ThreatRadar';
 import { MetricForm } from '../components/MetricForm';
 import { TelemetryFeed } from '../components/TelemetryFeed';
@@ -10,15 +9,9 @@ import { CompressForm } from '../components/CompressForm';
 import { MemoryPanel } from '../components/MemoryPanel';
 import { CircuitBreakerPanel } from '../components/CircuitBreakerPanel';
 import { CreditBadge } from '../components/CreditBadge';
+import { LiveMetricTiles } from '../components/LiveMetricTiles';
 import { ApiKeyProvider } from '../components/ApiKeyProvider';
 import { ApiKeyBar } from '../components/ApiKeyBar';
-
-const metrics = [
-  { label: 'Drift Score', value: '0.32', description: 'Composite drift index', accent: 'from-fuchsia-500/20 via-transparent to-cyan-500/10', delta: { label: 'vs last', value: '+0.04', direction: 'up' as const } },
-  { label: 'Pressure', value: 'LOW', description: 'Context pressure level', accent: 'from-emerald-500/20 via-transparent to-cyan-500/10', delta: { label: 'stable', value: '—', direction: 'flat' as const } },
-  { label: 'Verbosity', value: 'OPTIMAL', description: 'Output drift suppressor', accent: 'from-blue-500/20 via-transparent to-indigo-500/10' },
-  { label: 'Half-Life', value: '47m', description: 'Est. remaining session time', accent: 'from-amber-500/20 via-transparent to-orange-500/10', delta: { label: 'decaying', value: '-3m', direction: 'down' as const } },
-];
 
 const threats = [
   { id: 'DV-1', label: 'Memory Saturation', vector: 35, intensity: 0.62, quadrant: 'Q1', status: 'Active', impact: 'Token budget under pressure' },
@@ -84,12 +77,8 @@ function ConsoleContent() {
         {/* Tab Content */}
         {tab === 'overview' && (
           <>
-            {/* Metric tiles */}
-            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {metrics.map((metric) => (
-                <MetricTile key={metric.label} {...metric} />
-              ))}
-            </section>
+            {/* Live metric tiles — auto-update from telemetry */}
+            <LiveMetricTiles />
 
             {/* Radar + Metric Form */}
             <section className="grid gap-6 lg:grid-cols-2">
