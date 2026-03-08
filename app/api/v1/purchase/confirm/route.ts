@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateApiKey } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase';
+import { verifyTransaction } from '@/lib/verify-tx';
+
+const RECEIVING_WALLET = process.env.CRYPTO_WALLET_ADDRESS || '0x34278CCD5a1E781E586f9b49D92D3D893860Dd09';
 
 // POST /api/v1/purchase/confirm — submit tx hash to confirm payment
 export async function POST(request: NextRequest) {
@@ -47,13 +50,39 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Payment not found or already confirmed' }, { status: 404 });
   }
 
-  // Mark as confirmed and record tx hash
-  // TODO: Add on-chain verification via RPC provider (viem getTransactionReceipt)
-  // to verify recipient, token, and amount match before crediting.
+  // On-chain verification: check the tx actually sent the right token/amount to our wallet
+  const verification = await verifyTransaction(
+    tx_hash as `0x${string}`,
+    RECEIVING_WALLET,
+    payment.amount_usd,
+  );
+
+  if (!verification.verified) {
+    // Mark payment as failed with reason
+    await supabase.from('payments').update({
+      tx_hash,
+      status: 'failed',
+      metadata: { verification_error: verification.error },
+    }).eq('id', payment_id);
+
+    return NextResponse.json({
+      error: 'On-chain verification failed',
+      reason: verification.error,
+      chain_id: verification.chain_id,
+    }, { status: 400 });
+  }
+
+  // Verified — mark as confirmed
   await supabase.from('payments').update({
     tx_hash,
     status: 'confirmed',
     confirmed_at: new Date().toISOString(),
+    metadata: {
+      chain_id: verification.chain_id,
+      token: verification.token,
+      from_address: verification.from,
+      verified_amount: verification.amount_usd,
+    },
   }).eq('id', payment_id);
 
   // Read current balance then update with optimistic lock
@@ -93,5 +122,11 @@ export async function POST(request: NextRequest) {
     credits_added: payment.credits_added,
     new_balance: newBalance,
     tx_hash,
+    verification: {
+      chain_id: verification.chain_id,
+      token: verification.token,
+      from: verification.from,
+      amount_verified: verification.amount_usd,
+    },
   });
 }
