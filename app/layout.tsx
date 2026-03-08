@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Skynet - Agent Registry",
-  description: "Canonical Registry of Performance-Optimized Agent Systems",
+  title: "SkynetX — Cognitive Telemetry",
+  description: "Deterministic stability signals for AI agents operating under resource constraints.",
   icons: {
     icon: "/skynet-desktop-icon.svg",
     shortcut: "/skynet-desktop-icon.svg",

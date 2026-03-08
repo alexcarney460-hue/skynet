@@ -1,17 +1,23 @@
-import { GlobalMap } from '../components/GlobalMap';
 import { MetricTile } from '../components/MetricTile';
 import { ThreatRadar } from '../components/ThreatRadar';
-import { TopCommandBar } from '../components/TopCommandBar';
-import { ControlPanel } from '../components/ControlPanel';
-import { getDashboardData } from '@/lib/dashboard-data';
-import { readControlState } from '@/lib/control-store';
+import { MetricForm } from '../components/MetricForm';
+import { TelemetryFeed } from '../components/TelemetryFeed';
 
-export default async function ConsolePage() {
-  const [data, controlState] = await Promise.all([
-    getDashboardData(),
-    readControlState(),
-  ]);
+const metrics = [
+  { label: 'Drift Score', value: '0.32', description: 'Composite drift index', accent: 'from-fuchsia-500/20 via-transparent to-cyan-500/10', delta: { label: 'vs last', value: '+0.04', direction: 'up' as const } },
+  { label: 'Pressure', value: 'LOW', description: 'Context pressure level', accent: 'from-emerald-500/20 via-transparent to-cyan-500/10', delta: { label: 'stable', value: '—', direction: 'flat' as const } },
+  { label: 'Verbosity', value: 'OPTIMAL', description: 'Output drift suppressor', accent: 'from-blue-500/20 via-transparent to-indigo-500/10' },
+  { label: 'Half-Life', value: '47m', description: 'Est. remaining session time', accent: 'from-amber-500/20 via-transparent to-orange-500/10', delta: { label: 'decaying', value: '-3m', direction: 'down' as const } },
+];
 
+const threats = [
+  { id: 'DV-1', label: 'Memory Saturation', vector: 35, intensity: 0.62, quadrant: 'Q1', status: 'Active', impact: 'Token budget under pressure' },
+  { id: 'DV-2', label: 'Context Window Drift', vector: 145, intensity: 0.41, quadrant: 'Q2', status: 'Monitoring', impact: 'Output coherence declining' },
+  { id: 'DV-3', label: 'Verbosity Inflation', vector: 230, intensity: 0.28, quadrant: 'Q3', status: 'Contained', impact: 'Minor token waste' },
+  { id: 'DV-4', label: 'Session Decay', vector: 310, intensity: 0.55, quadrant: 'Q4', status: 'Active', impact: 'Half-life approaching threshold' },
+];
+
+export default function ConsolePage() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#030011] text-slate-100">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(255,0,153,0.3),transparent_55%),radial-gradient(circle_at_80%_0%,rgba(0,214,255,0.35),transparent_45%),linear-gradient(120deg,rgba(7,4,54,0.9),rgba(1,1,20,0.95))]" />
@@ -20,90 +26,28 @@ export default async function ConsolePage() {
       </div>
 
       <main className="relative z-10 mx-auto flex max-w-[1400px] flex-col gap-8 px-6 py-10 lg:px-10">
-        <TopCommandBar
-          missionTitle={data.mission.title}
-          missionSubtitle={data.mission.subtitle}
-          missionTime={data.mission.time}
-          missionDate={data.mission.date}
-          operatorsOnline={data.mission.operatorsOnline}
-          signalStrength={data.mission.signalStrength}
-          commandQueue={data.commandQueue}
-        />
+        <header className="flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.4em] text-cyan-200/80">SkynetX Console</p>
+            <h1 className="text-2xl font-semibold text-white">Cognitive Telemetry Dashboard</h1>
+          </div>
+          <span className="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-200">
+            Online
+          </span>
+        </header>
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {data.metrics.map((metric) => (
+          {metrics.map((metric) => (
             <MetricTile key={metric.label} {...metric} />
           ))}
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-5">
-          <div className="lg:col-span-3">
-            <ThreatRadar threats={data.threats} />
-          </div>
-          <div className="lg:col-span-2">
-            <GlobalMap nodes={data.nodes} />
-          </div>
+        <section className="grid gap-6 lg:grid-cols-2">
+          <ThreatRadar threats={threats} />
+          <MetricForm />
         </section>
 
-        <ControlPanel initialState={controlState} />
-
-        <section className="rounded-3xl border border-white/10 bg-[#050017]/80 p-6 text-sm text-slate-200">
-          <div className="flex flex-wrap items-center justify-between gap-6">
-            <div className="max-w-xl space-y-2">
-              <p className="text-xs uppercase tracking-[0.35em] text-cyan-200/80">
-                Desktop Icon
-              </p>
-              <h3 className="text-2xl font-semibold text-white">Skynet Mission Badge</h3>
-              <p>
-                Download the neon badge and pin it to your desktop/dock for one-click access to
-                Skynet Mission Control. Right-click the download button and choose “Save link as…” to
-                store the SVG, or convert it to PNG/ICO if your OS requires it.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <a
-                  href="/skynet-desktop-icon.svg"
-                  download
-                  className="rounded-full border border-cyan-300/40 bg-cyan-500/10 px-5 py-2 text-sm font-semibold text-cyan-100 hover:bg-cyan-500/20"
-                >
-                  Download SVG
-                </a>
-                <a
-                  href="/skynet-desktop-icon.svg"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-full border border-white/20 px-5 py-2 text-sm font-semibold text-white/90 hover:bg-white/10"
-                >
-                  Preview
-                </a>
-              </div>
-            </div>
-            <div className="w-40 h-40 rounded-2xl border border-white/10 bg-black/40 p-4 shadow-[0_0_35px_rgba(0,214,255,0.35)]">
-              <img
-                src="/skynet-desktop-icon.svg"
-                alt="Skynet desktop icon"
-                className="h-full w-full object-contain"
-                draggable={false}
-              />
-            </div>
-          </div>
-        </section>
-
-        <section className="mb-4 rounded-3xl border border-white/10 bg-white/5 p-6 text-sm text-slate-300/90">
-          <p className="text-xs uppercase tracking-[0.35em] text-slate-400">
-            Live Telemetry Snapshot
-          </p>
-          <p className="mt-2 text-base text-white">
-            Dashboard data is now sourced directly from Skynet APIs and Supabase
-            records. This snapshot was generated at{' '}
-            {new Intl.DateTimeFormat('en-US', {
-              timeZone: 'America/Los_Angeles',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-            }).format(new Date(data.generatedAt))}
-            .
-          </p>
-        </section>
+        <TelemetryFeed />
       </main>
     </div>
   );
