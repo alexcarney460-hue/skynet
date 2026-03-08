@@ -34,12 +34,14 @@ export default function ConsolePage() {
               <p className="text-xs uppercase tracking-[0.4em] text-cyan-200/80">SkynetX Console</p>
               <h1 className="text-2xl font-semibold text-white">Cognitive Telemetry Dashboard</h1>
             </div>
-            <a
-              href="/"
-              className="text-xs text-slate-500 hover:text-white transition"
-            >
-              Home
-            </a>
+            <div className="flex items-center gap-4">
+              <a href="/console/billing" className="text-xs text-slate-500 hover:text-white transition">
+                Billing
+              </a>
+              <a href="/" className="text-xs text-slate-500 hover:text-white transition">
+                Home
+              </a>
+            </div>
           </header>
 
           <ApiKeyBar />

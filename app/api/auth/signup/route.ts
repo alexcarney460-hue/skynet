@@ -32,11 +32,10 @@ export async function POST(request: NextRequest) {
   const raw = `sk_live_${randomBytes(24).toString('hex')}`;
   const hash = createHash('sha256').update(raw).digest('hex');
 
-  await supabase.from('api_keys').insert({
-    user_id: user.user.id,
-    key_hash: hash,
-    label: 'default',
-  });
+  await Promise.all([
+    supabase.from('api_keys').insert({ user_id: user.user.id, key_hash: hash, label: 'default' }),
+    supabase.from('plans').insert({ user_id: user.user.id, tier: 'free', credits: 100 }),
+  ]);
 
   return NextResponse.json({
     user_id: user.user.id,

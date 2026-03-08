@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateApiKey } from './api-auth';
 import { createServiceClient } from './supabase';
+import { checkAndDecrement } from './usage';
 
 type MetricType = 'drift' | 'pressure' | 'verbosity' | 'half-life';
 
@@ -16,6 +17,15 @@ export function createMetricRoute<TInput, TResult>(config: RouteConfig<TInput, T
     const auth = await authenticateApiKey(request);
     if ('error' in auth) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
+    // Check credits & rate limits
+    const usage = await checkAndDecrement(auth.userId);
+    if (!usage.allowed) {
+      return NextResponse.json(
+        { error: usage.reason, credits: usage.credits },
+        { status: 429 }
+      );
     }
 
     try {
@@ -35,7 +45,11 @@ export function createMetricRoute<TInput, TResult>(config: RouteConfig<TInput, T
         }).then();
       } catch {}
 
-      return NextResponse.json({ timestamp: new Date().toISOString(), ...result as Record<string, unknown> });
+      return NextResponse.json({
+        timestamp: new Date().toISOString(),
+        ...result as Record<string, unknown>,
+        _credits: usage.credits,
+      });
     } catch (err) {
       return NextResponse.json(
         { error: `Failed to evaluate ${config.metricType}`, message: err instanceof Error ? err.message : 'Unknown' },
