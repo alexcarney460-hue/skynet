@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAccount, useChainId, useSwitchChain, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseUnits } from 'viem';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
@@ -28,6 +28,7 @@ export default function PayWithWallet({ packId, amountUsd, credits, paymentId, r
   const [selectedChain, setSelectedChain] = useState<number>(SUPPORTED_CHAINS[0].id);
   const [step, setStep] = useState<Step>('select-token');
   const [errorMsg, setErrorMsg] = useState('');
+  const confirmedRef = useRef(false);
 
   const { writeContract, data: txHash, isPending: isSending } = useWriteContract({
     mutation: {
@@ -46,11 +47,14 @@ export default function PayWithWallet({ packId, amountUsd, credits, paymentId, r
     },
   });
 
-  // Once tx confirmed on-chain, confirm with our backend
-  if (txConfirmed && step === 'confirming') {
-    setStep('done');
-    confirmWithBackend(txHash!);
-  }
+  // Use useEffect to handle tx confirmation — avoids side effects during render
+  useEffect(() => {
+    if (txConfirmed && step === 'confirming' && txHash && !confirmedRef.current) {
+      confirmedRef.current = true;
+      setStep('done');
+      confirmWithBackend(txHash);
+    }
+  }, [txConfirmed, step, txHash]);
 
   async function confirmWithBackend(hash: string) {
     try {
@@ -72,7 +76,7 @@ export default function PayWithWallet({ packId, amountUsd, credits, paymentId, r
     }
   }
 
-  function handleSend() {
+  async function handleSend() {
     const tokenAddr = getTokenAddress(selectedChain, selectedToken);
     if (!tokenAddr || !receivingWallet) {
       setErrorMsg('Token not available on this chain or wallet not configured');
@@ -82,10 +86,13 @@ export default function PayWithWallet({ packId, amountUsd, credits, paymentId, r
 
     // Switch chain if needed
     if (chainId !== selectedChain) {
-      switchChain({ chainId: selectedChain });
-      // Wait for chain switch then retry
-      setTimeout(() => handleSend(), 2000);
-      return;
+      try {
+        await switchChain({ chainId: selectedChain });
+      } catch {
+        setErrorMsg('Failed to switch network. Please switch manually in your wallet.');
+        setStep('error');
+        return;
+      }
     }
 
     setStep('sending');
@@ -202,7 +209,7 @@ export default function PayWithWallet({ packId, amountUsd, credits, paymentId, r
         <div className="py-4">
           <p className="text-sm text-rose-400 mb-3">{errorMsg}</p>
           <button
-            onClick={() => { setStep('select-token'); setErrorMsg(''); }}
+            onClick={() => { setStep('select-token'); setErrorMsg(''); confirmedRef.current = false; }}
             className="text-xs text-cyan-400 hover:text-white"
           >
             Try again

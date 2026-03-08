@@ -32,10 +32,17 @@ export async function POST(request: NextRequest) {
   const raw = `sk_live_${randomBytes(24).toString('hex')}`;
   const hash = createHash('sha256').update(raw).digest('hex');
 
-  await Promise.all([
+  const [keyResult, planResult] = await Promise.all([
     supabase.from('api_keys').insert({ user_id: user.user.id, key_hash: hash, label: 'default' }),
     supabase.from('plans').insert({ user_id: user.user.id, tier: 'free', credits: 100 }),
   ]);
+
+  if (keyResult.error || planResult.error) {
+    return NextResponse.json({
+      error: 'Account created but setup incomplete. Please contact support.',
+      details: keyResult.error?.message || planResult.error?.message,
+    }, { status: 500 });
+  }
 
   return NextResponse.json({
     user_id: user.user.id,

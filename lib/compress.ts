@@ -167,6 +167,6 @@ export function truncateSmart(messages: Message[], targetTokens?: number): Compr
     savings_percent: originalTokens > 0
       ? parseFloat(((1 - compressedTokens / originalTokens) * 100).toFixed(1))
       : 0,
-    method: 'fast',
+    method: 'deep',
   };
 }

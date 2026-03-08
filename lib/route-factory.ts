@@ -42,8 +42,12 @@ export function createMetricRoute<TInput, TResult>(config: RouteConfig<TInput, T
           metric_type: config.metricType,
           input,
           result,
-        }).then();
-      } catch {}
+        }).then(({ error }) => {
+          if (error) console.error(`Telemetry insert failed [${config.metricType}]:`, error.message);
+        });
+      } catch (e) {
+        console.error('Telemetry setup error:', e);
+      }
 
       return NextResponse.json({
         timestamp: new Date().toISOString(),

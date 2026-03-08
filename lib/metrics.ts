@@ -111,8 +111,13 @@ export interface VerbosityResult {
 export function evaluateVerbosity(input: VerbosityInput): VerbosityResult {
   const { recentOutputLengths, expectedBaseline, tokenBudgetUsed, tokenBudgetTotal } = input;
 
+  if (recentOutputLengths.length === 0) {
+    return { level: 'OPTIMAL', driftPercent: 0, avgOutputLength: 0, expectedBaseline, recommendations: [] };
+  }
+
+  const safeBaseline = Math.max(expectedBaseline, 1);
   const avgOutputLength = recentOutputLengths.reduce((a, b) => a + b, 0) / recentOutputLengths.length;
-  const driftPercent = ((avgOutputLength - expectedBaseline) / expectedBaseline) * 100;
+  const driftPercent = ((avgOutputLength - safeBaseline) / safeBaseline) * 100;
 
   let level: VerbosityResult['level'] = 'OPTIMAL';
   if (driftPercent > 30) level = 'EXCESSIVE';

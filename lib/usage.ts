@@ -12,7 +12,7 @@ export async function checkAndDecrement(userId: string): Promise<UsageCheck> {
   const supabase = createServiceClient();
   const minute = getMinuteKey();
 
-  // Get credit balance
+  // Read current credit balance
   const { data: plan } = await supabase
     .from('plans')
     .select('credits')
@@ -25,7 +25,7 @@ export async function checkAndDecrement(userId: string): Promise<UsageCheck> {
     return { allowed: false, reason: 'No credits remaining. Purchase more at /console/billing.', credits: 0, rateUsed: 0 };
   }
 
-  // Check rate limit (30/min baseline, scales with balance)
+  // Check rate limit (scales with balance)
   const rateLimit = credits >= 10_000 ? 500 : credits >= 1_000 ? 100 : 30;
 
   const { data: rate } = await supabase
@@ -41,18 +41,31 @@ export async function checkAndDecrement(userId: string): Promise<UsageCheck> {
     return { allowed: false, reason: 'Rate limit exceeded. Slow down.', credits, rateUsed };
   }
 
-  // Deduct 1 credit
-  await supabase
+  // Atomic credit deduction: only deduct if credits >= 1 (prevents race condition)
+  const { data: updated, error: updateErr } = await supabase
     .from('plans')
     .update({ credits: credits - 1 })
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .gte('credits', 1)
+    .select('credits')
+    .single();
 
-  // Increment rate counter
-  if (rate) {
-    await supabase.from('rate_limits').update({ calls: rateUsed + 1 }).eq('user_id', userId).eq('minute', minute);
-  } else {
-    await supabase.from('rate_limits').insert({ user_id: userId, minute, calls: 1 });
+  if (updateErr || !updated) {
+    return { allowed: false, reason: 'No credits remaining. Purchase more at /console/billing.', credits: 0, rateUsed: 0 };
   }
 
-  return { allowed: true, credits: credits - 1, rateUsed: rateUsed + 1 };
+  // Increment rate counter via upsert
+  if (rate) {
+    await supabase
+      .from('rate_limits')
+      .update({ calls: rateUsed + 1 })
+      .eq('user_id', userId)
+      .eq('minute', minute);
+  } else {
+    await supabase
+      .from('rate_limits')
+      .insert({ user_id: userId, minute, calls: 1 });
+  }
+
+  return { allowed: true, credits: updated.credits, rateUsed: rateUsed + 1 };
 }

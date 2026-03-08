@@ -8,22 +8,12 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const label = (body.label as string) || 'default';
 
-  // Auth: try API key first, then fall back to user_id in body (for initial key creation)
-  let userId: string | null = null;
-
-  const authHeader = request.headers.get('authorization');
-  if (authHeader?.startsWith('Bearer sk_')) {
-    const auth = await authenticateApiKey(request);
-    if (!('error' in auth)) userId = auth.userId;
+  // Auth: require valid API key — no unauthenticated fallback
+  const auth = await authenticateApiKey(request);
+  if ('error' in auth) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
-
-  if (!userId && body.user_id) {
-    userId = body.user_id as string;
-  }
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-  }
+  const userId = auth.userId;
 
   // Generate key
   const raw = `sk_live_${randomBytes(24).toString('hex')}`;
