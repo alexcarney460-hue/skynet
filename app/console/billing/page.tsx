@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { CREDIT_PACKS, PackId } from '@/lib/plans';
+import { SUBSCRIPTION_TIERS, CREDIT_PACKS, TierId, PackId } from '@/lib/plans';
 import PayWithWallet from '@/app/components/PayWithWallet';
 import PayWithSolana from '@/app/components/PayWithSolana';
 
@@ -18,13 +18,25 @@ interface Payment {
   created_at: string;
 }
 
+interface SubscriptionInfo {
+  status: string;
+  tier: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+}
+
 interface UsageData {
   credits: number;
   totalPurchased: number;
+  tier: TierId;
+  tierName: string;
+  ratePerMin: number;
+  monthlyCredits: number;
+  subscription: SubscriptionInfo | null;
   payments: Payment[];
 }
 
-type NetworkType = 'evm' | 'solana' | 'stripe';
+type CryptoNetwork = 'evm' | 'solana';
 
 interface PurchaseState {
   paymentId: string;
@@ -33,24 +45,34 @@ interface PurchaseState {
   credits: number;
   wallet: string;
   solanaWallet?: string;
-  network: NetworkType;
+  network: CryptoNetwork;
 }
 
-export default function BillingPage() {
+export default function BillingPageWrapper() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#030011]" />}>
+      <BillingPage />
+    </Suspense>
+  );
+}
+
+function BillingPage() {
   const [data, setData] = useState<UsageData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState('');
   const [purchase, setPurchase] = useState<PurchaseState | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [selectedNetwork, setSelectedNetwork] = useState<NetworkType>('evm');
+  const [selectedCryptoNet, setSelectedCryptoNet] = useState<CryptoNetwork>('evm');
+  const [subscribing, setSubscribing] = useState(false);
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const stripeStatus = searchParams.get('stripe');
-    if (stripeStatus === 'success') {
-      setSuccessMsg('Payment received! Credits are being added...');
-    } else if (stripeStatus === 'cancelled') {
-      setSuccessMsg('Payment cancelled.');
+    const subscribed = searchParams.get('subscribed');
+    const cancelled = searchParams.get('cancelled');
+    if (subscribed) {
+      setSuccessMsg(`Subscribed to ${subscribed} plan! Credits are being provisioned...`);
+    } else if (cancelled) {
+      setSuccessMsg('Checkout cancelled.');
     }
   }, [searchParams]);
 
@@ -75,22 +97,55 @@ export default function BillingPage() {
     }
   }
 
-  async function initPurchase(pack: PackId) {
-    setPurchase(null);
-    setSuccessMsg(null);
+  async function subscribe(tier: TierId) {
+    setSubscribing(true);
     setError(null);
     try {
-      const endpoint = selectedNetwork === 'stripe' ? '/api/v1/purchase/stripe' : '/api/v1/purchase';
-      const res = await fetch(endpoint, {
+      const res = await fetch('/api/v1/subscribe', {
         method: 'POST',
         headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pack, network: selectedNetwork }),
+        body: JSON.stringify({ tier }),
       });
       const d = await res.json();
       if (d.error) {
         setError(d.error);
-      } else if (selectedNetwork === 'stripe') {
+      } else {
         window.location.href = d.checkout_url;
+      }
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setSubscribing(false);
+    }
+  }
+
+  async function openPortal() {
+    setError(null);
+    try {
+      const res = await fetch('/api/v1/subscribe/manage', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      });
+      const d = await res.json();
+      if (d.error) setError(d.error);
+      else window.location.href = d.portal_url;
+    } catch (err) {
+      setError(String(err));
+    }
+  }
+
+  async function initCryptoPurchase(pack: PackId) {
+    setPurchase(null);
+    setError(null);
+    try {
+      const res = await fetch('/api/v1/purchase', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pack, network: selectedCryptoNet }),
+      });
+      const d = await res.json();
+      if (d.error) {
+        setError(d.error);
       } else {
         setPurchase({
           paymentId: d.payment_id,
@@ -99,7 +154,7 @@ export default function BillingPage() {
           credits: d.credits,
           wallet: d.wallet,
           solanaWallet: d.solana_wallet,
-          network: selectedNetwork,
+          network: selectedCryptoNet,
         });
       }
     } catch (err) {
@@ -113,6 +168,9 @@ export default function BillingPage() {
     fetchUsage(apiKey);
   }
 
+  const paidTiers = (Object.entries(SUBSCRIPTION_TIERS) as [TierId, typeof SUBSCRIPTION_TIERS[TierId]][])
+    .filter(([id]) => id !== 'free');
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#030011] text-slate-100">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(255,0,153,0.3),transparent_55%),radial-gradient(circle_at_80%_0%,rgba(0,214,255,0.35),transparent_45%),linear-gradient(120deg,rgba(7,4,54,0.9),rgba(1,1,20,0.95))]" />
@@ -121,7 +179,7 @@ export default function BillingPage() {
         <header className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.4em] text-cyan-200/80">SkynetX</p>
-            <h1 className="text-2xl font-semibold text-white">Credits & Billing</h1>
+            <h1 className="text-2xl font-semibold text-white">Plans & Billing</h1>
           </div>
           <div className="flex items-center gap-4">
             <ConnectButton showBalance={false} chainStatus="icon" accountStatus="address" />
@@ -143,41 +201,88 @@ export default function BillingPage() {
 
         {data && (
           <>
-            {/* Credit Balance */}
+            {/* Current Plan & Credits */}
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-              <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Credit Balance</p>
-              <div className="mt-2 flex items-end gap-3">
-                <span className={`text-4xl font-bold ${data.credits > 100 ? 'text-white' : data.credits > 0 ? 'text-amber-400' : 'text-rose-400'}`}>
-                  {data.credits.toLocaleString()}
-                </span>
-                <span className="text-sm text-slate-500">credits remaining</span>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Current Plan</p>
+                  <p className="mt-1 text-xl font-bold text-white">{data.tierName}</p>
+                  {data.subscription && (
+                    <p className="text-xs text-slate-500">
+                      {data.subscription.cancelAtPeriodEnd
+                        ? `Cancels ${new Date(data.subscription.currentPeriodEnd).toLocaleDateString()}`
+                        : `Renews ${new Date(data.subscription.currentPeriodEnd).toLocaleDateString()}`}
+                    </p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Credits</p>
+                  <span className={`text-3xl font-bold ${data.credits > 100 ? 'text-white' : data.credits > 0 ? 'text-amber-400' : 'text-rose-400'}`}>
+                    {data.credits.toLocaleString()}
+                  </span>
+                  <p className="text-xs text-slate-600">{data.ratePerMin} req/min | {data.monthlyCredits.toLocaleString()}/mo</p>
+                </div>
               </div>
-              {data.credits === 0 && (
-                <p className="mt-2 text-sm text-rose-400">No credits left — purchase below to continue using the API.</p>
+              {data.subscription && (
+                <button
+                  onClick={openPortal}
+                  className="mt-4 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-slate-400 hover:text-white transition"
+                >
+                  Manage Subscription
+                </button>
               )}
-              <p className="mt-2 text-xs text-slate-600">
-                Total purchased: {data.totalPurchased.toLocaleString()} | 1 API call = 1 credit
-              </p>
             </div>
 
-            {/* Buy Credits */}
+            {/* Subscription Tiers */}
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-              <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Buy Credits</p>
-              <p className="mt-1 text-xs text-slate-600">Pay with USDC or USDT on Ethereum, Base, Polygon, Arbitrum, Solana, or pay with card</p>
+              <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Subscription Plans</p>
+              <p className="mt-1 text-xs text-slate-600">Monthly billing — credits refresh each cycle. Cancel anytime.</p>
 
-              {/* Network Toggle */}
+              <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                {paidTiers.map(([id, tier]) => {
+                  const isCurrent = data.tier === id;
+                  return (
+                    <div key={id} className={`rounded-2xl border p-5 ${isCurrent ? 'border-cyan-400/50 bg-cyan-500/10' : 'border-white/10 bg-white/[0.02]'}`}>
+                      <p className="text-lg font-bold text-white">{tier.name}</p>
+                      <p className="text-3xl font-bold text-white">${tier.priceUsd}<span className="text-sm font-normal text-slate-500">/mo</span></p>
+                      <p className="mt-1 text-sm text-slate-400">{tier.credits.toLocaleString()} credits/mo</p>
+                      <p className="text-xs text-slate-600">{tier.ratePerMin} req/min</p>
+                      {isCurrent ? (
+                        <p className="mt-4 w-full rounded-full border border-cyan-400/30 bg-cyan-500/10 py-2 text-center text-xs font-semibold text-cyan-300">
+                          Current Plan
+                        </p>
+                      ) : (
+                        <button
+                          onClick={() => subscribe(id)}
+                          disabled={subscribing}
+                          className="mt-4 w-full rounded-full bg-gradient-to-r from-cyan-500 to-fuchsia-500 py-2 text-xs font-semibold text-white hover:shadow-[0_0_20px_rgba(0,214,255,0.3)] disabled:opacity-50"
+                        >
+                          {subscribing ? 'Loading...' : data.tier === 'free' ? `Subscribe` : `Switch to ${tier.name}`}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Crypto Top-Up */}
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+              <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Crypto Top-Up</p>
+              <p className="mt-1 text-xs text-slate-600">One-time credit purchases with USDC/USDT — no card needed</p>
+
               <div className="mt-4 flex gap-2">
-                {(['evm', 'solana', 'stripe'] as NetworkType[]).map((net) => (
+                {(['evm', 'solana'] as CryptoNetwork[]).map((net) => (
                   <button
                     key={net}
-                    onClick={() => setSelectedNetwork(net)}
+                    onClick={() => setSelectedCryptoNet(net)}
                     className={`rounded-full px-4 py-1.5 text-xs font-medium border transition ${
-                      selectedNetwork === net
+                      selectedCryptoNet === net
                         ? 'border-cyan-400 bg-cyan-500/20 text-cyan-200'
                         : 'border-white/10 bg-white/5 text-slate-400 hover:text-white'
                     }`}
                   >
-                    {net === 'evm' ? 'EVM (ETH/Base/Polygon/Arb)' : net === 'solana' ? 'Solana (Phantom)' : 'Card (Visa/MC)'}
+                    {net === 'evm' ? 'EVM (ETH/Base/Polygon/Arb)' : 'Solana (Phantom)'}
                   </button>
                 ))}
               </div>
@@ -190,10 +295,10 @@ export default function BillingPage() {
                     <p className="mt-1 text-sm text-slate-400">{pack.credits.toLocaleString()} credits</p>
                     <p className="text-xs text-slate-600">${(pack.priceUsd / pack.credits * 1000).toFixed(2)}/1k calls</p>
                     <button
-                      onClick={() => initPurchase(id)}
-                      className="mt-4 w-full rounded-full bg-gradient-to-r from-cyan-500 to-fuchsia-500 py-2 text-xs font-semibold text-white hover:shadow-[0_0_20px_rgba(0,214,255,0.3)]"
+                      onClick={() => initCryptoPurchase(id)}
+                      className="mt-4 w-full rounded-full border border-white/10 bg-white/5 py-2 text-xs font-semibold text-white hover:bg-white/10 transition"
                     >
-                      Buy {id}
+                      Pay with crypto
                     </button>
                   </div>
                 ))}

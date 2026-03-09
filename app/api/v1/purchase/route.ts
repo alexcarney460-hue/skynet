@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
   if (!pack || !CREDIT_PACKS[pack]) {
     return NextResponse.json({
-      error: 'Invalid pack. Choose: starter, pro, or scale.',
+      error: 'Invalid pack. Choose: small, medium, or large.',
       packs: Object.entries(CREDIT_PACKS).map(([id, p]) => ({
         id,
         credits: p.credits,

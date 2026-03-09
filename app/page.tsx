@@ -434,7 +434,7 @@ export default function LandingPage() {
             {
               step: "04",
               title: "Scale",
-              desc: "Buy credit packs with a credit card or USDC/USDT from your wallet. Stripe, MetaMask, Phantom, or WalletConnect — pick a pack, one click.",
+              desc: "Subscribe for monthly credits with Stripe, or top up with USDC/USDT from MetaMask or Phantom. Cancel anytime.",
             },
           ].map((s) => (
             <div key={s.step} className="relative rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur-xl">
@@ -450,17 +450,18 @@ export default function LandingPage() {
       <section id="pricing" className="relative z-10 mx-auto max-w-7xl px-6 pb-24">
         <div className="text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.5em] text-amber-300/70">Pricing</p>
-          <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl">Prepaid credits. No subscriptions.</h2>
+          <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl">Simple monthly plans. Cancel anytime.</h2>
           <p className="mx-auto mt-4 max-w-lg text-sm text-slate-400">
-            Buy what you need, use it when you want. 1 API call = 1 credit. Pay with Visa/Mastercard or USDC/USDT on Ethereum, Base, Polygon, Arbitrum, BNB Chain, or Solana.
+            Credits refresh every month. 1 API call = 1 credit. Subscribe with Stripe, or top up with USDC/USDT on Ethereum, Base, Polygon, Arbitrum, or Solana.
           </p>
         </div>
 
-        <div className="mt-12 grid gap-6 sm:grid-cols-3">
+        <div className="mt-12 grid gap-6 sm:grid-cols-4">
           {[
-            { name: "Starter", credits: "1,000", price: 5, per1k: "5.00", rate: "30/min", popular: false },
-            { name: "Pro", credits: "10,000", price: 29, per1k: "2.90", rate: "100/min", popular: true },
-            { name: "Scale", credits: "100,000", price: 99, per1k: "0.99", rate: "500/min", popular: false },
+            { name: "Free", credits: "100", price: 0, rate: "30/min", popular: false, cta: "Get Started" },
+            { name: "Starter", credits: "5,000", price: 9, rate: "60/min", popular: false, cta: "Subscribe" },
+            { name: "Pro", credits: "25,000", price: 29, rate: "200/min", popular: true, cta: "Subscribe" },
+            { name: "Scale", credits: "150,000", price: 99, rate: "500/min", popular: false, cta: "Subscribe" },
           ].map((p) => (
             <div key={p.name} className={`relative rounded-2xl border p-8 ${
               p.popular ? 'border-cyan-400/40 bg-cyan-500/5' : 'border-white/10 bg-white/[0.03]'
@@ -473,13 +474,11 @@ export default function LandingPage() {
               <p className="text-lg font-bold text-white">{p.name}</p>
               <div className="mt-4 flex items-end gap-1">
                 <span className="text-4xl font-bold text-white">${p.price}</span>
+                {p.price > 0 && <span className="text-sm text-slate-500">/mo</span>}
               </div>
-              <p className="mt-2 text-sm text-slate-400">{p.credits} credits</p>
+              <p className="mt-2 text-sm text-slate-400">{p.credits} credits/mo</p>
               <div className="my-6 h-px bg-white/10" />
               <ul className="space-y-3 text-sm text-slate-400">
-                <li className="flex items-center gap-2">
-                  <span className="text-emerald-400">&#10003;</span> ${p.per1k} per 1,000 calls
-                </li>
                 <li className="flex items-center gap-2">
                   <span className="text-emerald-400">&#10003;</span> {p.rate} rate limit
                 </li>
@@ -489,25 +488,28 @@ export default function LandingPage() {
                 <li className="flex items-center gap-2">
                   <span className="text-emerald-400">&#10003;</span> Circuit breaker (free)
                 </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-emerald-400">&#10003;</span> Pay with card or crypto
-                </li>
+                {p.price > 0 && (
+                  <li className="flex items-center gap-2">
+                    <span className="text-emerald-400">&#10003;</span> Monthly credit refresh
+                  </li>
+                )}
               </ul>
-              <Link href="/console/billing" className={`mt-6 block w-full rounded-full py-3 text-center text-sm font-semibold transition ${
+              <Link href={p.price === 0 ? "/console" : "/console/billing"} className={`mt-6 block w-full rounded-full py-3 text-center text-sm font-semibold transition ${
                 p.popular
                   ? 'bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white hover:shadow-[0_0_20px_rgba(0,214,255,0.3)]'
                   : 'border border-white/15 bg-white/5 text-slate-300 hover:border-white/30 hover:text-white'
               }`}>
-                Buy {p.name}
+                {p.cta}
               </Link>
             </div>
           ))}
         </div>
 
-        {/* Free tier note */}
+        {/* Crypto note */}
         <div className="mt-8 text-center">
           <p className="text-sm text-slate-500">
-            Every account starts with <span className="text-white font-semibold">100 free credits</span> — no payment required.
+            No card? <span className="text-white font-semibold">Top up with crypto</span> — pay with USDC/USDT via MetaMask or Phantom.
+            Every account starts with <span className="text-white font-semibold">100 free credits</span>.
           </p>
         </div>
       </section>
