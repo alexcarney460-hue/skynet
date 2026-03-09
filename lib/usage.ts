@@ -12,60 +12,31 @@ export async function checkAndDecrement(userId: string): Promise<UsageCheck> {
   const supabase = createServiceClient();
   const minute = getMinuteKey();
 
-  // Read current credit balance
-  const { data: plan } = await supabase
-    .from('plans')
-    .select('credits')
-    .eq('user_id', userId)
-    .single();
+  // Atomic credit deduction via RPC — single SQL operation, no race condition
+  const { data: decremented, error: decrErr } = await supabase
+    .rpc('decrement_credit', { p_user_id: userId });
 
-  const credits = plan?.credits ?? 0;
-
-  if (credits <= 0) {
+  // RPC returns the new credit balance, or -1 if no credits remain
+  if (decrErr || decremented === null || decremented < 0) {
     return { allowed: false, reason: 'No credits remaining. Purchase more at /console/billing.', credits: 0, rateUsed: 0 };
   }
+
+  const credits = decremented as number;
 
   // Check rate limit (scales with balance)
   const rateLimit = credits >= 10_000 ? 500 : credits >= 1_000 ? 100 : 30;
 
-  const { data: rate } = await supabase
-    .from('rate_limits')
-    .select('calls')
-    .eq('user_id', userId)
-    .eq('minute', minute)
-    .single();
+  // Atomic rate limit increment via upsert with ON CONFLICT
+  const { data: rateData, error: rateErr } = await supabase
+    .rpc('increment_rate_limit', { p_user_id: userId, p_minute: minute });
 
-  const rateUsed = rate?.calls ?? 0;
+  const rateUsed = (rateData as number) ?? 0;
 
-  if (rateUsed >= rateLimit) {
-    return { allowed: false, reason: 'Rate limit exceeded. Slow down.', credits, rateUsed };
+  if (rateErr || rateUsed > rateLimit) {
+    // Refund the credit since we're rate-limiting
+    await supabase.rpc('refund_credit', { p_user_id: userId });
+    return { allowed: false, reason: 'Rate limit exceeded. Slow down.', credits: credits + 1, rateUsed };
   }
 
-  // Atomic credit deduction: only deduct if credits >= 1 (prevents race condition)
-  const { data: updated, error: updateErr } = await supabase
-    .from('plans')
-    .update({ credits: credits - 1 })
-    .eq('user_id', userId)
-    .gte('credits', 1)
-    .select('credits')
-    .single();
-
-  if (updateErr || !updated) {
-    return { allowed: false, reason: 'No credits remaining. Purchase more at /console/billing.', credits: 0, rateUsed: 0 };
-  }
-
-  // Increment rate counter via upsert
-  if (rate) {
-    await supabase
-      .from('rate_limits')
-      .update({ calls: rateUsed + 1 })
-      .eq('user_id', userId)
-      .eq('minute', minute);
-  } else {
-    await supabase
-      .from('rate_limits')
-      .insert({ user_id: userId, minute, calls: 1 });
-  }
-
-  return { allowed: true, credits: updated.credits, rateUsed: rateUsed + 1 };
+  return { allowed: true, credits, rateUsed };
 }

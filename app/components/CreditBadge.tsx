@@ -7,24 +7,41 @@ import { useApiKey } from './ApiKeyProvider';
 export function CreditBadge() {
   const { apiKey } = useApiKey();
   const [credits, setCredits] = useState<number | null>(null);
+  const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
-    if (!apiKey) { setCredits(null); return; }
+    if (!apiKey) { setCredits(null); setFetchError(false); return; }
     async function fetch_credits() {
       try {
         const res = await fetch('/api/v1/usage', {
           headers: { Authorization: `Bearer ${apiKey}` },
         });
         const data = await res.json();
-        if (!data.error) setCredits(data.credits);
-      } catch {}
+        if (!data.error) {
+          setCredits(data.credits);
+          setFetchError(false);
+        }
+      } catch {
+        setFetchError(true);
+      }
     }
     fetch_credits();
     const interval = setInterval(fetch_credits, 30000);
     return () => clearInterval(interval);
   }, [apiKey]);
 
-  if (!apiKey || credits === null) return null;
+  if (!apiKey) return null;
+
+  if (fetchError) {
+    return (
+      <span className="flex items-center gap-2 rounded-full border border-white/10 px-4 py-1.5 text-xs text-slate-500">
+        <span className="h-2 w-2 rounded-full bg-slate-500" />
+        credits unavailable
+      </span>
+    );
+  }
+
+  if (credits === null) return null;
 
   return (
     <Link

@@ -10,17 +10,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const usage = await checkAndDecrement(auth.userId);
-  if (!usage.allowed) {
-    return NextResponse.json({ error: usage.reason, credits: usage.credits }, { status: 429 });
-  }
-
   const params = request.nextUrl.searchParams;
   const agent_id = params.get('agent_id');
   const session_id = params.get('session_id');
 
   if (!agent_id) {
     return NextResponse.json({ error: 'agent_id required' }, { status: 400 });
+  }
+
+  // Deduct credit AFTER validation passes
+  const usage = await checkAndDecrement(auth.userId);
+  if (!usage.allowed) {
+    return NextResponse.json({ error: usage.reason, credits: usage.credits }, { status: 429 });
   }
 
   const supabase = createServiceClient();

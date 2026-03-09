@@ -35,7 +35,12 @@ export async function POST(request: NextRequest) {
   }
 
   // Circuit breaker is FREE — no credit cost (it saves money)
-  const body: CircuitInput = await request.json();
+  let body: CircuitInput;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
   const thresholds = { ...DEFAULT_THRESHOLDS, ...body.thresholds };
 
   const signals: Record<string, { value: number | string; threshold: number | string; tripped: boolean }> = {};

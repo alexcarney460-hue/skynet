@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAccount, useChainId, useSwitchChain, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseUnits } from 'viem';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { SUPPORTED_CHAINS, getTokenAddress, getChainName, ERC20_ABI, TokenType } from '@/lib/chains';
+import { SUPPORTED_CHAINS, getTokenAddress, getTokenDecimals, getChainName, ERC20_ABI, TokenType } from '@/lib/chains';
 import { PackId } from '@/lib/plans';
 
 interface Props {
@@ -97,8 +97,9 @@ export default function PayWithWallet({ packId, amountUsd, credits, paymentId, r
 
     setStep('sending');
 
-    // Both USDC and USDT use 6 decimals on all supported chains
-    const amount = parseUnits(amountUsd.toString(), 6);
+    // Decimals vary by chain (BSC uses 18, others use 6)
+    const decimals = getTokenDecimals(selectedChain, selectedToken);
+    const amount = parseUnits(amountUsd.toString(), decimals);
 
     writeContract({
       address: tokenAddr,

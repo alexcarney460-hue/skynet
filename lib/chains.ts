@@ -50,6 +50,16 @@ export const ERC20_ABI = [
 
 export type TokenType = 'USDC' | 'USDT';
 
+// Token decimals per chain — most use 6, but BSC USDC uses 18
+const TOKEN_DECIMALS: Record<string, number> = {
+  [`${bsc.id}:USDC`]: 18,
+  [`${bsc.id}:USDT`]: 18,
+};
+
+export function getTokenDecimals(chainId: number, token: TokenType): number {
+  return TOKEN_DECIMALS[`${chainId}:${token}`] ?? 6;
+}
+
 export function getTokenAddress(chainId: number, token: TokenType): `0x${string}` | undefined {
   return token === 'USDC' ? USDC_ADDRESSES[chainId] : USDT_ADDRESSES[chainId];
 }

@@ -1,9 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash, randomBytes } from 'crypto';
 import { createServiceClient } from '@/lib/supabase';
+import { checkIpRateLimit } from '@/lib/rate-limit-ip';
 
 export async function POST(request: NextRequest) {
-  const { email, password, regenerate_key } = await request.json();
+  // Rate limit: 10 login attempts per IP per 15 minutes
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const rl = checkIpRateLimit(ip, 'login', 10, 15 * 60 * 1000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Too many login attempts. Try again later.' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } },
+    );
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+  const { email, password, regenerate_key } = body;
 
   if (!email || !password) {
     return NextResponse.json({ error: 'Email and password required' }, { status: 400 });
@@ -14,7 +31,7 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 401 });
+    return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
   }
 
   // Fetch user's active API keys (metadata only — raw keys are never stored)

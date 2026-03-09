@@ -1,9 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash, randomBytes } from 'crypto';
 import { createServiceClient } from '@/lib/supabase';
+import { checkIpRateLimit } from '@/lib/rate-limit-ip';
 
 export async function POST(request: NextRequest) {
-  const { email, password } = await request.json();
+  // Rate limit: 5 signups per IP per hour
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const rl = checkIpRateLimit(ip, 'signup', 5, 60 * 60 * 1000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Too many signup attempts. Try again later.' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } },
+    );
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+  const { email, password } = body;
 
   if (!email || !password || password.length < 6) {
     return NextResponse.json({ error: 'Email and password (6+ chars) required' }, { status: 400 });
@@ -40,7 +57,6 @@ export async function POST(request: NextRequest) {
   if (keyResult.error || planResult.error) {
     return NextResponse.json({
       error: 'Account created but setup incomplete. Please contact support.',
-      details: keyResult.error?.message || planResult.error?.message,
     }, { status: 500 });
   }
 

@@ -12,12 +12,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const usage = await checkAndDecrement(auth.userId);
-  if (!usage.allowed) {
-    return NextResponse.json({ error: usage.reason, credits: usage.credits }, { status: 429 });
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const body = await request.json();
   const { messages, mode, target_tokens } = body;
 
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -36,6 +37,12 @@ export async function POST(request: NextRequest) {
   // Cap input at 200 messages
   if (messages.length > 200) {
     return NextResponse.json({ error: 'Max 200 messages per request' }, { status: 413 });
+  }
+
+  // Deduct credit AFTER validation passes
+  const usage = await checkAndDecrement(auth.userId);
+  if (!usage.allowed) {
+    return NextResponse.json({ error: usage.reason, credits: usage.credits }, { status: 429 });
   }
 
   let result;

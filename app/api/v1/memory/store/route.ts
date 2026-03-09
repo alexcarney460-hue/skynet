@@ -10,12 +10,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const usage = await checkAndDecrement(auth.userId);
-  if (!usage.allowed) {
-    return NextResponse.json({ error: usage.reason, credits: usage.credits }, { status: 429 });
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const body = await request.json();
   const { agent_id, session_id, data, metadata } = body;
 
   if (!agent_id || !session_id || !data) {
@@ -29,6 +30,12 @@ export async function POST(request: NextRequest) {
   // Cap at 500KB per entry
   if (jsonStr.length > 512_000) {
     return NextResponse.json({ error: 'Data too large. Max 500KB per session.' }, { status: 413 });
+  }
+
+  // Deduct credit AFTER validation passes
+  const usage = await checkAndDecrement(auth.userId);
+  if (!usage.allowed) {
+    return NextResponse.json({ error: usage.reason, credits: usage.credits }, { status: 429 });
   }
 
   const supabase = createServiceClient();
