@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { CREDIT_PACKS, PackId } from '@/lib/plans';
@@ -23,7 +24,7 @@ interface UsageData {
   payments: Payment[];
 }
 
-type NetworkType = 'evm' | 'solana';
+type NetworkType = 'evm' | 'solana' | 'stripe';
 
 interface PurchaseState {
   paymentId: string;
@@ -42,6 +43,16 @@ export default function BillingPage() {
   const [purchase, setPurchase] = useState<PurchaseState | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [selectedNetwork, setSelectedNetwork] = useState<NetworkType>('evm');
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const stripeStatus = searchParams.get('stripe');
+    if (stripeStatus === 'success') {
+      setSuccessMsg('Payment received! Credits are being added...');
+    } else if (stripeStatus === 'cancelled') {
+      setSuccessMsg('Payment cancelled.');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const stored = localStorage.getItem('skynetx_api_key');
@@ -69,22 +80,28 @@ export default function BillingPage() {
     setSuccessMsg(null);
     setError(null);
     try {
-      const res = await fetch('/api/v1/purchase', {
+      const endpoint = selectedNetwork === 'stripe' ? '/api/v1/purchase/stripe' : '/api/v1/purchase';
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ pack, network: selectedNetwork }),
       });
       const d = await res.json();
-      if (d.error) setError(d.error);
-      else setPurchase({
-        paymentId: d.payment_id,
-        packId: pack,
-        amountUsd: d.amount_usd,
-        credits: d.credits,
-        wallet: d.wallet,
-        solanaWallet: d.solana_wallet,
-        network: selectedNetwork,
-      });
+      if (d.error) {
+        setError(d.error);
+      } else if (selectedNetwork === 'stripe') {
+        window.location.href = d.checkout_url;
+      } else {
+        setPurchase({
+          paymentId: d.payment_id,
+          packId: pack,
+          amountUsd: d.amount_usd,
+          credits: d.credits,
+          wallet: d.wallet,
+          solanaWallet: d.solana_wallet,
+          network: selectedNetwork,
+        });
+      }
     } catch (err) {
       setError(String(err));
     }
@@ -146,11 +163,11 @@ export default function BillingPage() {
             {/* Buy Credits */}
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
               <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Buy Credits</p>
-              <p className="mt-1 text-xs text-slate-600">Pay with USDC or USDT on Ethereum, Base, Polygon, Arbitrum, or Solana</p>
+              <p className="mt-1 text-xs text-slate-600">Pay with USDC or USDT on Ethereum, Base, Polygon, Arbitrum, Solana, or pay with card</p>
 
               {/* Network Toggle */}
               <div className="mt-4 flex gap-2">
-                {(['evm', 'solana'] as NetworkType[]).map((net) => (
+                {(['evm', 'solana', 'stripe'] as NetworkType[]).map((net) => (
                   <button
                     key={net}
                     onClick={() => setSelectedNetwork(net)}
@@ -160,7 +177,7 @@ export default function BillingPage() {
                         : 'border-white/10 bg-white/5 text-slate-400 hover:text-white'
                     }`}
                   >
-                    {net === 'evm' ? 'EVM (ETH/Base/Polygon/Arb)' : 'Solana (Phantom)'}
+                    {net === 'evm' ? 'EVM (ETH/Base/Polygon/Arb)' : net === 'solana' ? 'Solana (Phantom)' : 'Card (Visa/MC)'}
                   </button>
                 ))}
               </div>
