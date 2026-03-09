@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   // Fetch all events from the last 7 days
   const { data: events, error } = await supabase
     .from('telemetry_events')
-    .select('metric_type, result, created_at, agent_id')
+    .select('metric_type, result, input, created_at, agent_id')
     .eq('user_id', auth.userId)
     .gte('created_at', weekAgo)
     .order('created_at', { ascending: true });
@@ -104,6 +104,8 @@ export async function GET(request: NextRequest) {
         agent: e.agent_id,
         time: e.created_at,
         recommendations: r.recommendations ?? [],
+        result: r,
+        input: e.input,
       };
     });
 
