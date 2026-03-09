@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticateApiKey } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase';
 import { verifyTransaction } from '@/lib/verify-tx';
+import { verifySolanaTransaction } from '@/lib/verify-solana-tx';
 
 const RECEIVING_WALLET = process.env.CRYPTO_WALLET_ADDRESS || '0x34278CCD5a1E781E586f9b49D92D3D893860Dd09';
+const SOLANA_RECEIVING_WALLET = process.env.SOLANA_WALLET_ADDRESS || '';
 
 // POST /api/v1/purchase/confirm — submit tx hash to confirm payment
 export async function POST(request: NextRequest) {
@@ -24,9 +26,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'payment_id and tx_hash required' }, { status: 400 });
   }
 
-  // Basic tx hash format validation (EVM 0x-prefixed 64-char hex)
-  if (!/^0x[a-fA-F0-9]{64}$/.test(tx_hash)) {
-    return NextResponse.json({ error: 'Invalid transaction hash format. Expected 0x-prefixed 64-char hex.' }, { status: 400 });
+  // Detect network from tx hash format
+  const isEvmTx = /^0x[a-fA-F0-9]{64}$/.test(tx_hash);
+  const isSolanaTx = /^[1-9A-HJ-NP-Za-km-z]{43,88}$/.test(tx_hash); // base58 signature
+
+  if (!isEvmTx && !isSolanaTx) {
+    return NextResponse.json({ error: 'Invalid transaction hash format. Expected EVM (0x-prefixed hex) or Solana (base58) signature.' }, { status: 400 });
   }
 
   const supabase = createServiceClient();
@@ -56,12 +61,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Payment not found or already confirmed' }, { status: 404 });
   }
 
-  // On-chain verification: check the tx actually sent the right token/amount to our wallet
-  const verification = await verifyTransaction(
-    tx_hash as `0x${string}`,
-    RECEIVING_WALLET,
-    payment.amount_usd,
-  );
+  // On-chain verification: route to correct verifier based on network
+  const verification = isSolanaTx
+    ? await verifySolanaTransaction(tx_hash, SOLANA_RECEIVING_WALLET, payment.amount_usd)
+    : await verifyTransaction(tx_hash as `0x${string}`, RECEIVING_WALLET, payment.amount_usd);
 
   if (!verification.verified) {
     // Mark payment as failed with reason
@@ -83,6 +86,7 @@ export async function POST(request: NextRequest) {
     tx_hash,
     status: 'confirmed',
     confirmed_at: new Date().toISOString(),
+    network: isSolanaTx ? 'solana' : 'evm',
     metadata: {
       chain_id: verification.chain_id,
       token: verification.token,

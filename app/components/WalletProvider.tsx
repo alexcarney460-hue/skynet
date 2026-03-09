@@ -5,6 +5,7 @@ import { WagmiProvider, createConfig, http } from 'wagmi';
 import { mainnet, base, polygon, arbitrum, bsc } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RainbowKitProvider, darkTheme, getDefaultConfig } from '@rainbow-me/rainbowkit';
+import SolanaWalletProvider from './SolanaWalletProvider';
 import '@rainbow-me/rainbowkit/styles.css';
 
 const config = getDefaultConfig({
@@ -28,7 +29,9 @@ export default function WalletProvider({ children }: { children: ReactNode }) {
             overlayBlur: 'small',
           })}
         >
-          {children}
+          <SolanaWalletProvider>
+            {children}
+          </SolanaWalletProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

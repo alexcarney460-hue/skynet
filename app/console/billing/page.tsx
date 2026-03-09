@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { CREDIT_PACKS, PackId } from '@/lib/plans';
 import PayWithWallet from '@/app/components/PayWithWallet';
+import PayWithSolana from '@/app/components/PayWithSolana';
 
 interface Payment {
   id: string;
@@ -22,12 +23,16 @@ interface UsageData {
   payments: Payment[];
 }
 
+type NetworkType = 'evm' | 'solana';
+
 interface PurchaseState {
   paymentId: string;
   packId: PackId;
   amountUsd: number;
   credits: number;
   wallet: string;
+  solanaWallet?: string;
+  network: NetworkType;
 }
 
 export default function BillingPage() {
@@ -36,6 +41,7 @@ export default function BillingPage() {
   const [apiKey, setApiKey] = useState('');
   const [purchase, setPurchase] = useState<PurchaseState | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [selectedNetwork, setSelectedNetwork] = useState<NetworkType>('evm');
 
   useEffect(() => {
     const stored = localStorage.getItem('skynetx_api_key');
@@ -66,7 +72,7 @@ export default function BillingPage() {
       const res = await fetch('/api/v1/purchase', {
         method: 'POST',
         headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pack }),
+        body: JSON.stringify({ pack, network: selectedNetwork }),
       });
       const d = await res.json();
       if (d.error) setError(d.error);
@@ -76,6 +82,8 @@ export default function BillingPage() {
         amountUsd: d.amount_usd,
         credits: d.credits,
         wallet: d.wallet,
+        solanaWallet: d.solana_wallet,
+        network: selectedNetwork,
       });
     } catch (err) {
       setError(String(err));
@@ -138,7 +146,24 @@ export default function BillingPage() {
             {/* Buy Credits */}
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
               <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Buy Credits</p>
-              <p className="mt-1 text-xs text-slate-600">Pay with USDC or USDT on Ethereum, Base, Polygon, or Arbitrum</p>
+              <p className="mt-1 text-xs text-slate-600">Pay with USDC or USDT on Ethereum, Base, Polygon, Arbitrum, or Solana</p>
+
+              {/* Network Toggle */}
+              <div className="mt-4 flex gap-2">
+                {(['evm', 'solana'] as NetworkType[]).map((net) => (
+                  <button
+                    key={net}
+                    onClick={() => setSelectedNetwork(net)}
+                    className={`rounded-full px-4 py-1.5 text-xs font-medium border transition ${
+                      selectedNetwork === net
+                        ? 'border-cyan-400 bg-cyan-500/20 text-cyan-200'
+                        : 'border-white/10 bg-white/5 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {net === 'evm' ? 'EVM (ETH/Base/Polygon/Arb)' : 'Solana (Phantom)'}
+                  </button>
+                ))}
+              </div>
 
               <div className="mt-4 grid gap-4 sm:grid-cols-3">
                 {(Object.entries(CREDIT_PACKS) as [PackId, typeof CREDIT_PACKS[PackId]][]).map(([id, pack]) => (
@@ -159,7 +184,19 @@ export default function BillingPage() {
             </div>
 
             {/* Wallet Payment Flow */}
-            {purchase && (
+            {purchase && purchase.network === 'solana' && purchase.solanaWallet && (
+              <PayWithSolana
+                packId={purchase.packId}
+                amountUsd={purchase.amountUsd}
+                credits={purchase.credits}
+                paymentId={purchase.paymentId}
+                receivingWallet={purchase.solanaWallet}
+                apiKey={apiKey}
+                onSuccess={handlePaymentSuccess}
+                onCancel={() => setPurchase(null)}
+              />
+            )}
+            {purchase && purchase.network === 'evm' && (
               <PayWithWallet
                 packId={purchase.packId}
                 amountUsd={purchase.amountUsd}
