@@ -2,36 +2,25 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ThreatRadar } from '../components/ThreatRadar';
-import { MetricForm } from '../components/MetricForm';
-import { TelemetryFeed } from '../components/TelemetryFeed';
-import { CompressForm } from '../components/CompressForm';
-import { MemoryPanel } from '../components/MemoryPanel';
-import { CircuitBreakerPanel } from '../components/CircuitBreakerPanel';
 import { CreditBadge } from '../components/CreditBadge';
-import { LiveMetricTiles } from '../components/LiveMetricTiles';
 import { ApiKeyProvider } from '../components/ApiKeyProvider';
 import { ApiKeyBar } from '../components/ApiKeyBar';
+import { DashboardOverview } from '../components/DashboardOverview';
+import { AlertFeed } from '../components/AlertFeed';
+import { ActivityChart } from '../components/ActivityChart';
+import { ApiPlayground } from '../components/ApiPlayground';
+import { TelemetryFeed } from '../components/TelemetryFeed';
 
-const threats = [
-  { id: 'DV-1', label: 'Memory Saturation', vector: 35, intensity: 0.62, quadrant: 'Q1', status: 'Active', impact: 'Token budget under pressure' },
-  { id: 'DV-2', label: 'Context Window Drift', vector: 145, intensity: 0.41, quadrant: 'Q2', status: 'Monitoring', impact: 'Output coherence declining' },
-  { id: 'DV-3', label: 'Verbosity Inflation', vector: 230, intensity: 0.28, quadrant: 'Q3', status: 'Contained', impact: 'Minor token waste' },
-  { id: 'DV-4', label: 'Session Decay', vector: 310, intensity: 0.55, quadrant: 'Q4', status: 'Active', impact: 'Half-life approaching threshold' },
-];
+type ConsoleTab = 'dashboard' | 'playground' | 'logs';
 
-type ConsoleTab = 'overview' | 'compress' | 'memory' | 'circuit-breaker' | 'telemetry';
-
-const TABS: { id: ConsoleTab; label: string; color: string }[] = [
-  { id: 'overview', label: 'Metrics', color: 'text-fuchsia-300' },
-  { id: 'compress', label: 'Compress', color: 'text-cyan-300' },
-  { id: 'memory', label: 'Memory', color: 'text-emerald-300' },
-  { id: 'circuit-breaker', label: 'Circuit Breaker', color: 'text-amber-300' },
-  { id: 'telemetry', label: 'Telemetry', color: 'text-fuchsia-300' },
+const TABS: { id: ConsoleTab; label: string }[] = [
+  { id: 'dashboard', label: 'Dashboard' },
+  { id: 'playground', label: 'API Playground' },
+  { id: 'logs', label: 'Event Log' },
 ];
 
 function ConsoleContent() {
-  const [tab, setTab] = useState<ConsoleTab>('overview');
+  const [tab, setTab] = useState<ConsoleTab>('dashboard');
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#030011] text-slate-100">
@@ -41,11 +30,10 @@ function ConsoleContent() {
       </div>
 
       <main className="relative z-10 mx-auto flex max-w-[1400px] flex-col gap-6 px-6 py-10 lg:px-10">
-        {/* Header */}
         <header className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.4em] text-cyan-200/80">SkynetX Console</p>
-            <h1 className="text-2xl font-semibold text-white">Cognitive Telemetry Dashboard</h1>
+            <h1 className="text-2xl font-semibold text-white">Agent Telemetry</h1>
           </div>
           <div className="flex items-center gap-4">
             <CreditBadge />
@@ -54,10 +42,8 @@ function ConsoleContent() {
           </div>
         </header>
 
-        {/* API Key */}
         <ApiKeyBar />
 
-        {/* Tab Navigation */}
         <nav className="flex flex-wrap gap-1 rounded-2xl border border-white/10 bg-white/[0.02] p-1.5">
           {TABS.map((t) => (
             <button
@@ -74,33 +60,21 @@ function ConsoleContent() {
           ))}
         </nav>
 
-        {/* Tab Content */}
-        {tab === 'overview' && (
+        {tab === 'dashboard' && (
           <>
-            {/* Live metric tiles — auto-update from telemetry */}
-            <LiveMetricTiles />
-
-            {/* Radar + Metric Form */}
-            <section className="grid gap-6 lg:grid-cols-2">
-              <ThreatRadar threats={threats} />
-              <MetricForm />
-            </section>
+            <DashboardOverview />
+            <div className="grid gap-6 lg:grid-cols-2">
+              <ActivityChart />
+              <AlertFeed />
+            </div>
           </>
         )}
 
-        {tab === 'compress' && (
-          <CompressForm />
+        {tab === 'playground' && (
+          <ApiPlayground />
         )}
 
-        {tab === 'memory' && (
-          <MemoryPanel />
-        )}
-
-        {tab === 'circuit-breaker' && (
-          <CircuitBreakerPanel />
-        )}
-
-        {tab === 'telemetry' && (
+        {tab === 'logs' && (
           <TelemetryFeed />
         )}
       </main>
