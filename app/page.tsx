@@ -434,7 +434,7 @@ export default function LandingPage() {
             {
               step: "04",
               title: "Scale",
-              desc: "Buy credit packs with USDC/USDT from your wallet. Connect MetaMask, Phantom, or WalletConnect — pick a pack, one click.",
+              desc: "Buy credit packs with a credit card or USDC/USDT from your wallet. Stripe, MetaMask, Phantom, or WalletConnect — pick a pack, one click.",
             },
           ].map((s) => (
             <div key={s.step} className="relative rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur-xl">
@@ -452,7 +452,7 @@ export default function LandingPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.5em] text-amber-300/70">Pricing</p>
           <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl">Prepaid credits. No subscriptions.</h2>
           <p className="mx-auto mt-4 max-w-lg text-sm text-slate-400">
-            Buy what you need, use it when you want. 1 API call = 1 credit. Pay with USDC or USDT on Ethereum, Base, Polygon, Arbitrum, BNB Chain, or Solana.
+            Buy what you need, use it when you want. 1 API call = 1 credit. Pay with Visa/Mastercard or USDC/USDT on Ethereum, Base, Polygon, Arbitrum, BNB Chain, or Solana.
           </p>
         </div>
 
@@ -490,7 +490,7 @@ export default function LandingPage() {
                   <span className="text-emerald-400">&#10003;</span> Circuit breaker (free)
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-emerald-400">&#10003;</span> Pay with crypto
+                  <span className="text-emerald-400">&#10003;</span> Pay with card or crypto
                 </li>
               </ul>
               <Link href="/console/billing" className={`mt-6 block w-full rounded-full py-3 text-center text-sm font-semibold transition ${
