@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { SUBSCRIPTION_TIERS, CREDIT_PACKS, TierId, PackId } from '@/lib/plans';
+import { SUBSCRIPTION_TIERS, CREDIT_PACKS, SKILL_PRODUCTS, TierId, PackId, ProductId } from '@/lib/plans';
 import PayWithWallet from '@/app/components/PayWithWallet';
 import PayWithSolana from '@/app/components/PayWithSolana';
 
@@ -64,13 +64,17 @@ function BillingPage() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [selectedCryptoNet, setSelectedCryptoNet] = useState<CryptoNetwork>('evm');
   const [subscribing, setSubscribing] = useState(false);
+  const [buyingProduct, setBuyingProduct] = useState<string | null>(null);
   const searchParams = useSearchParams();
 
   useEffect(() => {
     const subscribed = searchParams.get('subscribed');
     const cancelled = searchParams.get('cancelled');
+    const purchased = searchParams.get('purchased');
     if (subscribed) {
       setSuccessMsg(`Subscribed to ${subscribed} plan! Credits are being provisioned...`);
+    } else if (purchased) {
+      setSuccessMsg(`${purchased} purchased! Check below for install instructions.`);
     } else if (cancelled) {
       setSuccessMsg('Checkout cancelled.');
     }
@@ -162,6 +166,54 @@ function BillingPage() {
     }
   }
 
+  async function buyProduct(productId: ProductId, method: 'stripe' | 'crypto' = 'stripe') {
+    setBuyingProduct(productId);
+    setError(null);
+    try {
+      if (method === 'crypto') {
+        const res = await fetch('/api/v1/products/purchase', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ product: productId, method: 'crypto', network: selectedCryptoNet }),
+        });
+        const d = await res.json();
+        if (d.error) {
+          setError(d.error);
+        } else if (d.install) {
+          setSuccessMsg(`You already own ${productId}! Install: ${d.install}`);
+        } else {
+          setPurchase({
+            paymentId: d.payment_id,
+            packId: 'small' as PackId,
+            amountUsd: d.amount_usd,
+            credits: 0,
+            wallet: d.wallet,
+            solanaWallet: d.solana_wallet,
+            network: selectedCryptoNet,
+          });
+        }
+      } else {
+        const res = await fetch('/api/v1/products/purchase', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ product: productId, method: 'stripe' }),
+        });
+        const d = await res.json();
+        if (d.error) {
+          setError(d.error);
+        } else if (d.install) {
+          setSuccessMsg(`You already own ${productId}! Install: ${d.install}`);
+        } else {
+          window.location.href = d.checkout_url;
+        }
+      }
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setBuyingProduct(null);
+    }
+  }
+
   function handlePaymentSuccess(creditsAdded: number, newBalance: number) {
     setSuccessMsg(`+${creditsAdded.toLocaleString()} credits added! New balance: ${newBalance.toLocaleString()}`);
     setPurchase(null);
@@ -207,7 +259,7 @@ function BillingPage() {
                 <div>
                   <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Current Plan</p>
                   <p className="mt-1 text-xl font-bold text-white">{data.tierName}</p>
-                  {data.subscription && (
+                  {data.subscription && data.subscription.currentPeriodEnd && new Date(data.subscription.currentPeriodEnd).getFullYear() > 2000 && (
                     <p className="text-xs text-slate-500">
                       {data.subscription.cancelAtPeriodEnd
                         ? `Cancels ${new Date(data.subscription.currentPeriodEnd).toLocaleDateString()}`
@@ -300,6 +352,45 @@ function BillingPage() {
                     >
                       Pay with crypto
                     </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Skills Marketplace */}
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+              <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Skills Marketplace</p>
+              <p className="mt-1 text-xs text-slate-600">Downloadable skills for Claude Code — one-time purchase</p>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                {(Object.entries(SKILL_PRODUCTS) as [ProductId, typeof SKILL_PRODUCTS[ProductId]][]).map(([id, product]) => (
+                  <div key={id} className="rounded-2xl border border-fuchsia-500/20 bg-gradient-to-br from-fuchsia-500/5 to-cyan-500/5 p-5">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-lg font-bold text-white">{product.name}</p>
+                        <p className="mt-1 text-sm text-slate-400">{product.description}</p>
+                      </div>
+                      <p className="text-2xl font-bold text-white">${product.priceUsd}</p>
+                    </div>
+                    <div className="mt-4 flex gap-2">
+                      <button
+                        onClick={() => buyProduct(id, 'stripe')}
+                        disabled={buyingProduct === id}
+                        className="flex-1 rounded-full bg-gradient-to-r from-cyan-500 to-fuchsia-500 py-2 text-xs font-semibold text-white hover:shadow-[0_0_20px_rgba(0,214,255,0.3)] disabled:opacity-50 transition"
+                      >
+                        {buyingProduct === id ? 'Loading...' : 'Buy with Card'}
+                      </button>
+                      <button
+                        onClick={() => buyProduct(id, 'crypto')}
+                        disabled={buyingProduct === id}
+                        className="flex-1 rounded-full border border-white/10 bg-white/5 py-2 text-xs font-semibold text-white hover:bg-white/10 disabled:opacity-50 transition"
+                      >
+                        Pay with Crypto
+                      </button>
+                    </div>
+                    <div className="mt-3 text-[0.65rem] text-slate-600">
+                      Install: <code className="text-slate-400">curl ... | bash</code> — Full docs included
+                    </div>
                   </div>
                 ))}
               </div>

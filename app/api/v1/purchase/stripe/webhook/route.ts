@@ -47,12 +47,15 @@ export async function POST(request: NextRequest) {
 
         const customerId = typeof sub.customer === 'string' ? sub.customer : String(sub.customer);
         const startDate = sub.current_period_start ?? sub.start_date ?? sub.created;
-        const billingAnchor = sub.billing_cycle_anchor as number | undefined;
 
-        // For period end, calculate from start + 1 month if not available
-        let periodEnd = sub.current_period_end;
-        if (!periodEnd && startDate) {
-          const startMs = (startDate as number) * 1000;
+        // Always calculate period end — Stripe API v2026 removed current_period_end
+        const nowTs = Math.floor(Date.now() / 1000);
+        let periodStart = startDate as number | undefined;
+        if (!periodStart) periodStart = nowTs;
+
+        let periodEnd = sub.current_period_end as number | undefined;
+        if (!periodEnd) {
+          const startMs = periodStart * 1000;
           const endDate = new Date(startMs);
           endDate.setMonth(endDate.getMonth() + 1);
           periodEnd = Math.floor(endDate.getTime() / 1000);
@@ -64,8 +67,8 @@ export async function POST(request: NextRequest) {
           stripe_subscription_id: sub.id as string,
           tier,
           status: sub.status as string,
-          current_period_start: startDate ? new Date((startDate as number) * 1000).toISOString() : new Date().toISOString(),
-          current_period_end: periodEnd ? new Date((periodEnd as number) * 1000).toISOString() : null,
+          current_period_start: new Date(periodStart * 1000).toISOString(),
+          current_period_end: new Date(periodEnd * 1000).toISOString(),
           cancel_at_period_end: (sub.cancel_at_period_end as boolean) ?? false,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'stripe_subscription_id' });
@@ -176,8 +179,36 @@ export async function POST(request: NextRequest) {
         // Only handle one-time payments (not subscriptions)
         if (session.mode === 'subscription') break;
 
-        const paymentId = session.metadata?.payment_id;
         const userId = session.metadata?.user_id;
+
+        // Handle product purchases (skills marketplace)
+        if (session.metadata?.type === 'product') {
+          const productId = session.metadata?.product_id;
+          if (!userId || !productId) break;
+
+          // Record the confirmed purchase in payments table
+          await supabase.from('payments').insert({
+            user_id: userId,
+            pack: `product:${productId}`,
+            credits_added: 0,
+            amount_usd: (session.amount_total || 0) / 100,
+            status: 'confirmed',
+            confirmed_at: new Date().toISOString(),
+            tx_hash: session.id,
+            network: 'stripe',
+            metadata: {
+              stripe_session_id: session.id,
+              stripe_payment_intent: session.payment_intent,
+              type: 'product',
+              product_id: productId,
+            },
+          });
+
+          break;
+        }
+
+        // Handle credit pack purchases
+        const paymentId = session.metadata?.payment_id;
         const credits = Number(session.metadata?.credits);
 
         if (!paymentId || !userId || !credits) break;
