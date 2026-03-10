@@ -13,12 +13,26 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SkynetX — Cognitive Telemetry",
-  description: "Deterministic stability signals for AI agents operating under resource constraints.",
+  title: "SKYNETx — AI Infrastructure & Skills Marketplace",
+  description: "AI infrastructure platform with memory API, skills marketplace, subscriptions, and crypto payments. Download OpenClaudeCode — control Claude Code from Telegram.",
+  metadataBase: new URL("https://skynetx.io"),
   icons: {
     icon: "/skynet-desktop-icon.svg",
     shortcut: "/skynet-desktop-icon.svg",
     apple: "/skynet-desktop-icon.svg",
+  },
+  openGraph: {
+    title: "SKYNETx — AI Infrastructure & Skills Marketplace",
+    description: "Download OpenClaudeCode — control Claude Code from Telegram. Memory API, subscriptions, crypto payments. $5 one-time.",
+    url: "https://skynetx.io",
+    siteName: "SKYNETx",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SKYNETx — AI Infrastructure & Skills Marketplace",
+    description: "Download OpenClaudeCode — control Claude Code from Telegram. $5 one-time.",
   },
 };
 
