@@ -155,7 +155,6 @@ export default function LandingPage() {
           <a href="#problem" className="hidden sm:inline text-sm text-slate-400 transition hover:text-white">Why</a>
           <a href="#metrics" className="hidden sm:inline text-sm text-slate-400 transition hover:text-white">Metrics</a>
           <a href="#save-tokens" className="hidden sm:inline text-sm text-slate-400 transition hover:text-white">Save Tokens</a>
-          <a href="#skills" className="hidden sm:inline text-sm text-slate-400 transition hover:text-white">Skills</a>
           <a href="#pricing" className="hidden sm:inline text-sm text-slate-400 transition hover:text-white">Pricing</a>
           <a href="#api" className="hidden sm:inline text-sm text-slate-400 transition hover:text-white">API</a>
           <Link href="/console" className="rounded-full bg-gradient-to-r from-cyan-500 to-fuchsia-500 px-5 py-2 text-sm font-semibold text-white transition hover:shadow-[0_0_25px_rgba(0,214,255,0.4)]">
@@ -320,63 +319,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Skills Marketplace */}
-      <section id="skills" className="relative z-10 mx-auto max-w-7xl px-6 pb-24">
-        <div className="text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.5em] text-fuchsia-300/70">Skills Marketplace</p>
-          <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl">Downloadable skills for Claude Code</h2>
-          <p className="mx-auto mt-4 max-w-xl text-sm text-slate-400">
-            Install powerful capabilities into your Claude Code setup with one command.
-            Each skill comes with an MCP server, full docs, and install scripts.
-          </p>
-        </div>
-
-        <div className="mt-12 mx-auto max-w-2xl">
-          <div className="relative overflow-hidden rounded-2xl border border-fuchsia-500/30 bg-gradient-to-br from-fuchsia-500/10 to-cyan-500/10 p-8 backdrop-blur-xl">
-            <div className="pointer-events-none absolute -top-16 -right-16 h-32 w-32 rounded-full bg-fuchsia-500/20 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-16 -left-16 h-32 w-32 rounded-full bg-cyan-500/20 blur-3xl" />
-            <div className="relative">
-              <div className="flex items-start justify-between">
-                <div>
-                  <span className="rounded-full bg-fuchsia-500/20 px-3 py-1 text-[0.6rem] font-bold uppercase tracking-[0.4em] text-fuchsia-300">New</span>
-                  <h3 className="mt-3 text-2xl font-bold text-white">OpenClaudeCode</h3>
-                  <p className="mt-2 text-sm text-slate-400 leading-relaxed max-w-md">
-                    Control Claude Code remotely from Telegram. Send commands from your phone and Claude Code executes them — build features, fix bugs, deploy to production, all without touching a terminal.
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-3xl font-bold text-white">$5</p>
-                  <p className="text-xs text-slate-500">one-time</p>
-                </div>
-              </div>
-
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <div className="flex items-center gap-2 text-sm text-slate-400">
-                  <span className="text-emerald-400">&#10003;</span> Telegram MCP server (5 tools)
-                </div>
-                <div className="flex items-center gap-2 text-sm text-slate-400">
-                  <span className="text-emerald-400">&#10003;</span> One-line install (bash + PowerShell)
-                </div>
-                <div className="flex items-center gap-2 text-sm text-slate-400">
-                  <span className="text-emerald-400">&#10003;</span> Auto-polling loop config
-                </div>
-                <div className="flex items-center gap-2 text-sm text-slate-400">
-                  <span className="text-emerald-400">&#10003;</span> Pay with card or crypto
-                </div>
-              </div>
-
-              <div className="mt-6 flex gap-3">
-                <Link href="/console/billing" className="rounded-full bg-gradient-to-r from-cyan-500 to-fuchsia-500 px-6 py-2.5 text-sm font-semibold text-white transition hover:shadow-[0_0_20px_rgba(0,214,255,0.3)]">
-                  Buy Now — $5
-                </Link>
-                <a href="https://github.com/alexcarney460-hue/openclaudecode-skill" target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/15 bg-white/5 px-6 py-2.5 text-sm font-semibold text-slate-300 transition hover:border-white/30 hover:text-white">
-                  View on GitHub
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* API Preview — Drift */}
       <section id="api" className="relative z-10 mx-auto max-w-7xl px-6 pb-16">

@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SKYNETx — AI Infrastructure & Skills Marketplace",
-  description: "AI infrastructure platform with memory API, skills marketplace, subscriptions, and crypto payments. Download OpenClaudeCode — control Claude Code from Telegram.",
+  title: "SKYNETx — Cognitive Runtime for Autonomous Agents",
+  description: "Runtime monitoring API for autonomous agents. Drift detection, context pressure, verbosity suppression, and session half-life estimation. Deterministic, sub-2ms, framework-agnostic.",
   metadataBase: new URL("https://skynetx.io"),
   icons: {
     icon: "/skynet-desktop-icon.svg",
@@ -22,8 +22,8 @@ export const metadata: Metadata = {
     apple: "/skynet-desktop-icon.svg",
   },
   openGraph: {
-    title: "SKYNETx — AI Infrastructure & Skills Marketplace",
-    description: "Download OpenClaudeCode — control Claude Code from Telegram. Memory API, subscriptions, crypto payments. $5 one-time.",
+    title: "SKYNETx — Cognitive Runtime for Autonomous Agents",
+    description: "Runtime monitoring API for autonomous agents. Drift detection, context pressure, verbosity suppression, session half-life. 100 free credits.",
     url: "https://skynetx.io",
     siteName: "SKYNETx",
     type: "website",
@@ -31,8 +31,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "SKYNETx — AI Infrastructure & Skills Marketplace",
-    description: "Download OpenClaudeCode — control Claude Code from Telegram. $5 one-time.",
+    title: "SKYNETx — Cognitive Runtime for Autonomous Agents",
+    description: "Runtime monitoring API for autonomous agents. Deterministic, sub-2ms, framework-agnostic. 100 free credits.",
   },
 };
 

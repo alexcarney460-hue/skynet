@@ -181,32 +181,6 @@ export async function POST(request: NextRequest) {
 
         const userId = session.metadata?.user_id;
 
-        // Handle product purchases (skills marketplace)
-        if (session.metadata?.type === 'product') {
-          const productId = session.metadata?.product_id;
-          if (!userId || !productId) break;
-
-          // Record the confirmed purchase in payments table
-          await supabase.from('payments').insert({
-            user_id: userId,
-            pack: `product:${productId}`,
-            credits_added: 0,
-            amount_usd: (session.amount_total || 0) / 100,
-            status: 'confirmed',
-            confirmed_at: new Date().toISOString(),
-            tx_hash: session.id,
-            network: 'stripe',
-            metadata: {
-              stripe_session_id: session.id,
-              stripe_payment_intent: session.payment_intent,
-              type: 'product',
-              product_id: productId,
-            },
-          });
-
-          break;
-        }
-
         // Handle credit pack purchases
         const paymentId = session.metadata?.payment_id;
         const credits = Number(session.metadata?.credits);

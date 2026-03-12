@@ -41,20 +41,6 @@ export const CREDIT_PACKS = {
 
 export type PackId = keyof typeof CREDIT_PACKS;
 
-// Downloadable skill products — one-time purchase
-export const SKILL_PRODUCTS = {
-  openclaudecode: {
-    name: 'OpenClaudeCode',
-    description: 'Control Claude Code remotely from Telegram. Send commands from your phone and Claude Code executes them.',
-    priceUsd: 5,
-    stripePriceId: null as string | null, // Set after creating Stripe product
-    repoUrl: 'https://github.com/alexcarney460-hue/openclaudecode-skill',
-    installCmd: 'curl -fsSL https://raw.githubusercontent.com/alexcarney460-hue/openclaudecode-skill/main/install.sh | bash',
-    installCmdWin: 'irm https://raw.githubusercontent.com/alexcarney460-hue/openclaudecode-skill/main/install.ps1 | iex',
-  },
-} as const;
-
-export type ProductId = keyof typeof SKILL_PRODUCTS;
 
 // Free tier: 100 credits on signup
 export const FREE_CREDITS = 100;
